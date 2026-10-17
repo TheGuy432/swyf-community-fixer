@@ -9,7 +9,7 @@ if not exist "%CSC%" (
   exit /b 1
 )
 if not exist dist mkdir dist
-"%CSC%" /nologo /target:exe /platform:x64 /optimize+ /codepage:65001 /win32manifest:app.manifest /out:dist\SWYF-Speech-Fixer.exe src\Fixer.cs src\CpuFix.cs src\Speedup.cs src\VulkanProbe.cs src\VoiceFix.cs src\QwenFix.cs src\AssemblyInfo.cs
+"%CSC%" /nologo /target:exe /platform:x64 /optimize+ /codepage:65001 /win32manifest:app.manifest /out:dist\SWYF-Speech-Fixer.exe src\Fixer.cs src\CpuFix.cs src\Speedup.cs src\VulkanProbe.cs src\VoiceFix.cs src\QwenFix.cs src\WhisperKeep.cs src\AssemblyInfo.cs
 if errorlevel 1 exit /b 1
 echo.
 echo Built dist\SWYF-Speech-Fixer.exe

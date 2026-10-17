@@ -99,7 +99,25 @@ so they never get the Qwen3 voice option.
 All other checks are unchanged. Whether the Qwen3 model actually runs well next to the game on an 8 GB card has not been tested,
 which is why this is opt-in and marked experimental.
 
-## 5. Graphics card test (no files changed)
+## 5. Better English speech recognition (`ScriptsAssDef.dll`), game build 0.1.74
+
+**Problem.** `WindowsSpeechCompatibility.NeedsCpuRecognition` keeps speech recognition off some graphics cards
+(NVIDIA `1F82`, `2803` = RTX 4060 Ti, `2B85`; AMD `15D8`, `67DF` = RX 470/570/580, `699F`, `744C` = RX 7900 XTX) and off any
+card when the game is started with `-whisper-cpu`. Since 0.1.74, `ShouldPreferMoonshine(whisperSupported, windowsArm64,
+cpuCompatibility, cpuEnvironment, arguments)` then returns true, so English speech uses Moonshine tiny instead of Whisper.
+Players on those PCs went from mostly correct transcripts on 0.1.69 to unusable ones on 0.1.74.
+
+**Patch.** In `ScriptsAssDef.dll` (SHA-256 `4cf9f54e3760c2392952ef17f981e01c06fb483c655f9953ba9f6386889f0b2e`), in `ShouldPreferMoonshine`
+(method RVA `0x11BCC3`, tiny header, IL code at file offset `0x119EC4`):
+- IL `0x0009` `ldarg.2` (cpuCompatibility) → `ldc.i4.0` (file `0x119ECD`: `04` → `16`)
+- IL `0x000B` `ldarg.3` (cpuEnvironment) → `ldc.i4.0` (file `0x119ECF`: `05` → `16`)
+- Result SHA-256 `ede26084d0551f287d3d9c0f76a15d5f9c674b1b6d088d8952672a1bec0fc736`.
+
+Moonshine is still used when Whisper can't run at all (no AVX) or with the `-moonshine` launch option, and the player's own
+"Moonshine" choice in the game's settings still wins. `KOLKATA_WHISPER_CPU_ONLY` stays set, so Whisper runs on the CPU, as it
+already does for all other languages on those PCs.
+
+## 6. Graphics card test (no files changed)
 
 The tool starts itself again as a child process (`--vulkan-probe`).
 - The child loads the game's own `ggml-base.dll` and `ggml.dll` from `Plugins\x86_64`, with `KOLKATA_WHISPER_CPU_ONLY` removed from its environment.
@@ -110,7 +128,7 @@ The tool starts itself again as a child process (`--vulkan-probe`).
 
 It reads `Steam\userdata\*\config\localconfig.vdf` to see whether `-whisper-cpu` is already set. It never writes to it.
 
-## 6. Watermark tip (no files changed)
+## 7. Watermark tip (no files changed)
 
 Reads the Unity PlayerPrefs value `KolkataOS.BanditCam.Watermark` from
 `HKEY_CURRENT_USER\Software\Jatater Worldwide\Scam With Your Friends`, only to say whether the watermark is already off.

@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 
 static partial class Fixer
 {
-    const string Version = "4.3.0";
+    const string Version = "4.4.0";
     const string AppId = "4954910";
     const string GameFolderName = "Scam With Your Friends";
     const string GameExe = "Scam With Your Friends.exe";
@@ -26,6 +26,7 @@ static partial class Fixer
     static extern bool IsProcessorFeaturePresent(uint feature);
 
     static string assumeCpu, simulateProbe; // only settable in test builds (SWYF_TEST)
+    static int assumeThreads;
 
     // ---- Language ----
     static bool Pt;
@@ -62,6 +63,8 @@ static partial class Fixer
 #if SWYF_TEST
             if (a.StartsWith("--assume-cpu=")) { assumeCpu = a.Substring(13); continue; }
             if (a.StartsWith("--simulate-probe=")) { simulateProbe = a.Substring(17); continue; }
+            if (a.StartsWith("--assume-gpu=")) { assumeGpu = a.Substring(13); continue; }
+            if (a.StartsWith("--assume-threads=")) { assumeThreads = int.Parse(a.Substring(17)); continue; }
 #endif
             if (a.StartsWith("--lang=")) lang = a.Substring(7).ToLowerInvariant();
             else if (a == "--uninstall") uninstallFlag = true;
@@ -146,8 +149,9 @@ static partial class Fixer
         var speed = new Item();
         var voice = new Item();
         var qwen = new Item();
+        var keep = new Item();
         var gpu = new Item();
-        var items = new[] { cpu, speed, voice, qwen, gpu };
+        var items = new[] { cpu, speed, voice, qwen, keep, gpu };
 
         string dllHash = File.Exists(dll) ? Sha256(dll) : null;
         bool speedInstalled = ModelsConverted(modelDir) || dllHash == DllPatched;
@@ -159,6 +163,9 @@ static partial class Fixer
         }
         string pocketHash = File.Exists(PocketPath(gameDir)) ? Sha256(PocketPath(gameDir)) : null;
         string asmHash = File.Exists(GameAsmPath(gameDir)) ? Sha256(GameAsmPath(gameDir)) : null;
+        string sadHash = File.Exists(SadPath(gameDir)) ? Sha256(SadPath(gameDir)) : null;
+        bool cpuSpeech = GameUsesCpuSpeech(ReadLaunchOptions());
+        bool strongCpu = hasAvx2 && (assumeThreads > 0 ? assumeThreads : Environment.ProcessorCount) >= 8;
 
         Action describe = () =>
         {
@@ -201,6 +208,22 @@ static partial class Fixer
                                       + "          travar, ficar sem memória ou fechar o jogo. Só marque se quiser testar.")
                 : Tr("not available for this game version", "não disponível para esta versão do jogo");
 
+            keep.Name = Tr("Better English speech recognition (Whisper instead of Moonshine)",
+                           "Melhor reconhecimento de voz em inglês (Whisper em vez de Moonshine)");
+            keep.Installed = sadHash == SadPatched;
+            keep.Available = hasAvx && (sadHash == SadPatched || sadHash == SadOriginal);
+            keep.Status = keep.Installed ? Tr("installed - English speech uses the more accurate Whisper model on your processor",
+                                              "instalado - a voz em inglês usa o modelo Whisper, mais preciso, no processador")
+                : !keep.Available ? Tr("not available for this game version", "não disponível para esta versão do jogo")
+                : cpuSpeech && strongCpu ? Tr("not installed - recommended: on your PC the game uses the much less accurate\n"
+                                              + "          Moonshine model for English (your graphics card is on its list, or -whisper-cpu)",
+                                              "não instalado - recomendado: no seu PC o jogo usa o modelo Moonshine, bem menos\n"
+                                              + "          preciso, para inglês (sua placa de vídeo está na lista dele, ou -whisper-cpu)")
+                : cpuSpeech ? Tr("not installed - more accurate English speech, but each sentence takes longer on your processor",
+                                 "não instalado - voz em inglês mais precisa, mas cada frase demora mais no seu processador")
+                : Tr("not needed now - only matters if the game moves speech to the processor (-whisper-cpu)",
+                     "não precisa agora - só importa se o jogo passar a voz para o processador (-whisper-cpu)");
+
             gpu.Name = Tr("Graphics card speech test", "Teste da placa de vídeo");
             gpu.Installed = false;
             gpu.Available = hasAvx;
@@ -211,6 +234,7 @@ static partial class Fixer
         describe();
         foreach (Item it in items) it.Wanted = it.Available;   // recommended: everything that applies
         qwen.Wanted = qwen.Installed;                           // experimental: only when the player ticks it
+        keep.Wanted = keep.Installed || (keep.Available && cpuSpeech && strongCpu);
 
         // ---- Menu ----
         while (true)
@@ -292,6 +316,13 @@ static partial class Fixer
             else { UninstallQwenFix(gameDir); }
         }
 
+        if (keep.Available && (keep.Wanted || keep.Installed))
+        {
+            Header(++step, steps, keep.Name);
+            if (keep.Wanted) InstallWhisperKeep(gameDir);
+            else { UninstallWhisperKeep(gameDir); }
+        }
+
         bool gpuProblem = false, gpuNone = false;
         if (gpu.Available && gpu.Wanted)
         {
@@ -338,6 +369,13 @@ static partial class Fixer
                 if (hasCpuOption) Line(Tr("  You already have the launch option -whisper-cpu set. Good - that prevents this crash.",
                                           "  Você já tem a opção de inicialização -whisper-cpu. Ótimo - isso evita esse travamento."));
                 else LaunchOptionPrompt(launch);
+                if (!keep.Wanted && keep.Available && strongCpu)
+                {
+                    Line(Tr("  With -whisper-cpu, English speech switches to the less accurate Moonshine model. Run this tool",
+                            "  Com -whisper-cpu, a voz em inglês muda para o modelo Moonshine, menos preciso. Rode esta ferramenta"));
+                    Line(Tr("  again afterwards and tick \"Better English speech recognition\" if you play in English.",
+                            "  de novo depois e marque \"Melhor reconhecimento de voz em inglês\" se você joga em inglês."));
+                }
             }
         }
 
@@ -444,6 +482,7 @@ static partial class Fixer
         if (UninstallDll(dll) != 0) ok = false;
         if (UninstallVoiceFix(gameDir) != 0) ok = false;
         if (UninstallQwenFix(gameDir) != 0) ok = false;
+        if (UninstallWhisperKeep(gameDir) != 0) ok = false;
         Line("");
         if (ok)
         {

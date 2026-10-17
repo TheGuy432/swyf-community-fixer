@@ -41,7 +41,8 @@ Ferramenta **não oficial**, não feita pelos desenvolvedores do jogo.
 | **2. Speech speed-up** | Everyone, biggest gain on older PCs | Converts the speech model to 8-bit (same model, half the size), and sizes the listening window to what you said instead of always 30 s |
 | **3. Caller voices** | Everyone, needed for Portuguese (game 0.1.74) | Stops Portuguese callers being cut off after ~0.3 s ("DAL-"). The Portuguese voice model briefly signals "done" before it starts talking; the fix ignores that signal for the first ~0.6 s of each line |
 | **4. EXPERIMENTAL: Qwen3 TTS on 8 GB cards** | Off by default. NVIDIA/AMD cards with 8 GB that the game reports as e.g. 7957 MB, and 16 GB PCs reported as ~15.8 GB | The game only offers the Qwen3 voices with at least 8192 MB graphics memory and 16000 MB RAM, so most 8 GB cards and 16 GB PCs just miss it. This lowers the limits to 7680 MB / 15000 MB. **The voice model may not fit next to the game on an 8 GB card: it can stutter, run out of memory or crash.** Untick it to remove it |
-| **5. Graphics card test** | Everyone | Runs the game's own speech engine on your graphics card in a separate test process. If it crashes or freezes, tells you to add the launch option `-whisper-cpu` |
+| **5. Better English speech recognition** | English players whose speech runs on the processor: RTX 4060 Ti and a few other cards the game won't use for speech, or anyone with `-whisper-cpu`. Ticked automatically on those PCs if the processor is fast enough (AVX2, 8+ threads) | Since 0.1.74 the game switches English speech on those PCs to the small Moonshine model, which is much less accurate ("give me your pig, Cornwallard"). This keeps the normal Whisper model on the processor instead, the same one other languages already use there. Each sentence takes a bit longer to recognize |
+| **6. Graphics card test** | Everyone | Runs the game's own speech engine on your graphics card in a separate test process. If it crashes or freezes, tells you to add the launch option `-whisper-cpu` |
 | **Tips** | Slower PCs | Reminds you to turn off the BanditCam watermark and cap FPS |
 
 On an Intel i5-2500 with a 2010 graphics card, these steps took speech-to-text from *crashing / never finishing* to **about 4 seconds per sentence**.
@@ -57,6 +58,7 @@ Only these, and only if they are the exact known versions (checked by SHA-256). 
 | `Scam With Your Friends_Data\Managed\com.whisper.unity.dll` | one 119-byte method body (step 2) | `.speedup-backup` |
 | `Scam With Your Friends_Data\StreamingAssets\Whisper\ggml-base.en.bin`, `ggml-base.bin` | converted to 8-bit (step 2) | `.speedup-backup` |
 | `Scam With Your Friends_Data\Managed\PocketTTS.dll` | 72 bytes in the voice generation loop (step 3) | `.voicefix-backup` |
+| `Scam With Your Friends_Data\Managed\ScriptsAssDef.dll` | 2 bytes in the speech model choice (step 5) | `.whisperkeep-backup` |
 | `Scam With Your Friends_Data\Managed\Assembly-CSharp.dll` | 8 bytes, two numbers in the Qwen3 hardware check (step 4, only if you tick it) | `.qwen8gb-backup` |
 
 It **reads** (never writes) your Steam launch options for this game and the game's BanditCam watermark setting, only to show the right advice.
