@@ -1,0 +1,220 @@
+# SWYF Speech Fixer - English
+# Format: key = text. "\n" is a line break, {0} {1} are filled in by the program. Keep them.
+# Missing lines fall back to English, so partial translations work.
+_name = English
+
+# ---- Window ----
+ui.header_tagline = Unofficial community tool, not made by the game's developers
+ui.game = Game
+ui.build = build {0}
+ui.your_pc = Your PC
+ui.unknown_cpu = Processor not detected
+ui.choose_title = Choose what to fix
+ui.choose_subtitle = Recommended fixes for your PC are already ticked. Unticking an installed fix removes it.
+ui.experimental = Experimental
+ui.pill_recommended = Recommended
+ui.pill_installed = Installed
+ui.pill_optional = Optional
+ui.pill_not_needed = Not needed
+ui.pill_not_available = Not available
+ui.pill_experimental = Experimental
+ui.pill_untested = Untested
+ui.untested_note = Fixes marked UNTESTED haven't been confirmed in the game yet. If something goes wrong, untick it here and report it to Tiger (Discord: tigerlundberg) in the Scam With Your Friends Discord.
+ui.undo_all = Undo everything
+ui.close = Close
+ui.cancel = Cancel
+ui.nothing_to_change = Nothing to change
+ui.apply_one = Apply 1 change
+ui.apply_n = Apply {0} changes
+ui.notfound_title = Game folder not found
+ui.notfound_text = Couldn't find Scam With Your Friends automatically. In Steam, right-click the game > Manage > Browse local files, then choose that folder here.
+ui.browse = Browse for the game folder…
+ui.browse_description = Choose the Scam With Your Friends game folder
+ui.notfound_wrong_folder = That isn't the game folder (there's no "{0}" in it). Try again.
+ui.running_title = Close the game first
+ui.running_text = Scam With Your Friends is running. Close it completely, then press Try again. Nothing was changed.
+ui.try_again = Try again
+ui.undo_title = Undo everything?
+ui.undo_text = This puts back the game's original files for every fix this tool has installed.
+ui.undo_launch_note = If you added -whisper-cpu to the game's launch options in Steam, that stays. Remove it there yourself if you want it gone.
+ui.undo_yes = Yes, undo everything
+ui.undo_step = Restoring the original game files
+ui.remove_step = Remove: {0}
+ui.finish_step = Finish
+ui.applying_title = Applying your changes…
+ui.undoing_title = Undoing everything…
+ui.applying_subtitle = Keep the game closed until this finishes.
+ui.working = Working…
+ui.gpu_busy = Starting the speech engine on your graphics card… (up to 30 seconds)
+ui.show_details = Show details
+ui.hide_details = Hide details
+ui.copy_details = Copy details
+ui.copy = Copy
+ui.copied = Copied
+ui.done_title = Done. {0} changes applied.
+ui.done_title_none = Done.
+ui.done_title_one = Done. 1 change applied.
+ui.done_text = Start the game from Steam as usual. Run this tool again any time to change or undo fixes. A game update or Steam's 'Verify integrity of game files' may undo them - just run this again.
+ui.done_warn_title = Done, but something needs a look
+ui.done_warn_text = Not every step worked fully. The details below say what happened.
+ui.error_title = Something went wrong
+ui.error_text = Your original files were not removed. If it keeps happening, copy the details and send them to Tiger (Discord: tigerlundberg).
+ui.undone_title = Undone. The game's original files are back.
+ui.undone_text = If you added -whisper-cpu to the launch options and want it gone, remove it in Steam yourself.
+ui.undone_partly_title = Some files could not be restored
+ui.undone_partly_text = In Steam, right-click the game > Properties > Installed Files > Verify integrity of game files. That puts all original files back.
+ui.one_more_step = One more step
+ui.launch_title = Add a Steam launch option so the game doesn't crash
+ui.launch_why = The speech engine crashed or froze while testing your graphics card. This option makes speech use your processor instead.
+ui.launch_step1 = In Steam, right-click Scam With Your Friends > Properties
+ui.launch_step2 = On the General tab, paste this into Launch Options:
+ui.launch_step3 = Close the window. That's it.
+ui.launch_existing = You already have "{0}" there. Keep it and add -whisper-cpu after a space.
+ui.open_steam = Open Steam
+ui.keep_hint = With -whisper-cpu, English speech switches to the less accurate Moonshine model. If you play in English, run this tool again afterwards and tick "Better English speech recognition".
+ui.cpu_option_already = You already have -whisper-cpu in your launch options. Good - that prevents this crash.
+ui.loadfail_title = Windows may be blocking the game's speech files
+ui.loadfail_text = Couldn't load them ({0}). Check Windows Security > App & browser control > Smart App Control, and your antivirus. Then run this tool again.
+ui.tips_title = Tips for your PC
+ui.tip_remove_cpu_option = You have -whisper-cpu in your launch options. Speech works on your graphics card, so you can try removing it for faster speech. If the game then crashes when speech starts, put it back.
+ui.change_fixes = Change fixes
+
+# ---- Text mode (console) ----
+main.something_went_wrong = Something went wrong:
+main.your_original_files_were_not = Your original files were not removed.
+main.press_enter_to_close = Press Enter to close...
+main.unofficial = (unofficial)
+main.fixes_speech_to_text_and = Fixes speech-to-text and caller voices in Scam With Your Friends.
+main.not_made_or_supported_by = Not made or supported by the game's developers.
+main.could_not_find_game_folder = Could not find the game folder automatically.
+main.paste_game_folder_path_steam = Paste the game folder path (Steam > right-click game > Manage > Browse local files), then press Enter:
+main.that_doesn_t_look_like = That doesn't look like the game folder (no "{0}" there). Nothing was changed.
+main.game_folder = Game folder:
+main.game_is_running_close_it = The game is running. Close it completely and run this again. Nothing was changed.
+main.processor_avx = Processor: AVX
+main.threads = threads
+main.choose_what_to_do_recommended = Choose what to do (recommended choices are already ticked):
+main.experimental = EXPERIMENTAL:
+main.untested = UNTESTED
+main.type_number_to_tick_untick = Type a number to tick/untick it. Unticking something that is installed removes it.
+main.enter_go_u_undo_everything = Enter = go    U = undo everything    Q = quit without changes
+main.nothing_was_changed = Nothing was changed.
+main.ignored = (ignored "{0}")
+main.with_whisper_cpu_english_speech = With -whisper-cpu, English speech switches to the less accurate Moonshine model. Run this tool again afterwards and tick "Better English speech recognition" if you play in English.
+main.tips = Tips
+main.all_done = ALL DONE.
+main.run_this_tool_again_any = Run this tool again any time to change what is installed, or type U to undo everything.
+main.game_update_or_verify_integrity = A game update or 'Verify integrity of game files' may undo the fixes - just run this again.
+main.speech_model_files_not_found = Speech model files not found - skipped. (Steam > Verify integrity of game files.)
+main.faster_speech_model_already_installed = Faster speech model: already installed.
+main.not_enough_free_disk_space = Not enough free disk space for the faster model (need about {0} MB) - skipped.
+main.converting_to_faster_format = Converting {0} to the faster format ...
+main.done_s = done ({0} s)
+main.shorter_listening_window = Shorter listening window ...
+main.done = done
+main.shorter_listening_window_already_installed = Shorter listening window: already installed.
+main.shorter_listening_window_skipped_your = Shorter listening window: SKIPPED (your game version has a different com.whisper.unity.dll).
+main.could_not_restore_old_cpu = Could not restore the old CPU fix files.
+main.undone_original_game_files_restored = UNDONE - original game files restored.
+main.if_you_added_whisper_cpu = If you added -whisper-cpu to the launch options and want it gone, remove it in Steam yourself.
+main.some_files_could_not_be = Some files could not be restored. Run Steam > Properties > Installed Files > Verify integrity of game files.
+main.action_needed_add_steam_launch = #  ACTION NEEDED: add a Steam launch option                   #
+main.1_open_steam_library = 1. Open Steam > Library.
+main.2_right_click_scam_with = 2. Right-click 'Scam With Your Friends' > Properties.
+main.3_on_general_tab_find = 3. On the General tab, find 'Launch Options' and type:   -whisper-cpu
+main.you_already_have_there_keep = (You already have "{0}" there - keep it and add -whisper-cpu after a space.)
+main.4_close_properties_window = 4. Close the Properties window.
+main.this_makes_speech_use_processor = This makes speech use the processor instead of the graphics card, so the game won't crash.
+main.press_enter_when_you_have = Press Enter when you have done this...
+main.yes = yes
+main.no = NO
+
+# ---- Fix list, steps and tips ----
+core.not_installed_stops_portuguese_callers = not installed - stops Portuguese callers being cut off after a split second
+core.old_cpu_fix = Old CPU fix
+core.your_cpu_has_no_avx = your CPU has no AVX, speech can't run on it
+core.not_needed_your_cpu_has = not needed (your CPU has AVX2)
+core.not_needed_game_has_its = not needed (the game has its own fix now)
+core.installed = installed
+core.needed_for_your_cpu = needed for your CPU
+core.not_available_for_this_game = not available for this game version
+core.faster_speech_recognition = Faster speech recognition
+core.your_cpu_can_t_run = your CPU can't run speech recognition
+core.installed_2 = installed
+core.partly_installed = partly installed
+core.not_installed_recommended_mostly_for = not installed - recommended, mostly for older PCs
+core.caller_voice_fix = Caller voice fix
+core.not_available_for_this_game_2 = not available for this game version (maybe already fixed)
+core.qwen3_tts_on_8_gb = Qwen3 TTS on 8 GB graphics cards / 16 GB RAM
+core.installed_untick_to_remove_if = installed - untick to remove if the game stutters or crashes
+core.off_unlocks_qwen3_voices_on = off - unlocks the Qwen3 voices on cards that report just under 8 GB. May stutter, run out of memory or crash. Only tick this if you want to try it.
+core.better_english_speech_recognition_whisper = Better English speech recognition (Whisper instead of Moonshine)
+core.installed_english_speech_uses_more = installed - English speech uses the more accurate Whisper model on your processor
+core.not_installed_recommended_on_your = not installed - recommended: on your PC the game uses the much less accurate Moonshine model for English (your graphics card is on its list, or -whisper-cpu)
+core.not_installed_more_accurate_english = not installed - more accurate English speech, but each sentence takes longer on your processor
+core.not_needed_now_only_matters = not needed now - only matters if the game moves speech to the processor (-whisper-cpu)
+core.graphics_card_speech_test = Graphics card speech test
+core.checks_if_speech_can_use = checks if speech can use your graphics card (changes no files)
+core.skipped_your_cpu_can_t = skipped, your CPU can't run speech recognition
+core.takes_few_seconds = - takes a few seconds...
+core.installing = Installing ...
+core.already_installed = Already installed.
+core.removed_original_files_restored = Removed - original files restored.
+core.could_not_restore_files_run = Could not restore the files. Run Steam > Verify integrity of game files.
+core.passed_on_speech_can_use = PASSED on {0}. Speech can use your graphics card.
+core.note_you_have_whisper_cpu = Note: you have -whisper-cpu in your launch options. You can try removing it for faster speech. If the game then crashes when speech starts, put it back.
+core.no_usable_vulkan_graphics_card = No usable Vulkan graphics card found - the game will use the CPU for speech by itself. OK.
+core.could_not_load_game_s = Could not load the game's speech files ({0}).
+core.windows_may_be_blocking_them = Windows may be blocking them: check Windows Security > App & browser control > Smart App Control, and your antivirus. Then run this tool again.
+core.froze = froze
+core.crashed = crashed
+core.failed_speech_engine_during_graphics = FAILED - the speech engine {0} during the graphics card test{1}.
+core.without_whisper_cpu_launch_option = Without the -whisper-cpu launch option, the game will probably crash when speech starts.
+core.you_already_have_launch_option = You already have the launch option -whisper-cpu set. Good - that prevents this crash.
+core.your_pc_is_on_slower = Your PC is on the slower side for this game, so:
+core.banditcam_watermark_already_off_good = BanditCam watermark: already OFF. Good.
+core.turn_off_banditcam_watermark_open = Turn OFF the BanditCam WATERMARK: open the BanditCam app on the in-game computer and click the watermark toggle. After every call the game re-encodes the recording to add the watermark, and that slows down speech recognition right when the next call starts.
+core.turn_on_vsync_or_cap = Turn on VSync or cap your FPS (the game runs uncapped by default).
+core.speak_after_caller_has_finished = Speak after the caller has finished, then give it a few seconds.
+core.speak_after_caller_has_finished_2 = Speak after the caller has finished talking.
+core.your_cpu_can_t_run_2 = Your CPU can't run the game's speech recognition, but you can type to the callers.
+
+# ---- Old CPU fix ----
+cpu.removed_old_cpu_fix_s = Removed the old CPU fix's replacement file - the game now has its own fix.
+cpu.disabled_old_bepinex_loader_from = Disabled the old BepInEx loader from the first fix version (it caused a crash).
+
+# ---- Faster speech recognition ----
+speed.original_speech_model_files_restored = Original speech model files restored.
+speed.could_not_restore_everything_run = Could not restore everything. Run Steam > Properties > Installed Files > Verify integrity of game files.
+speed.could_not_restore_com_whisper = Could not restore com.whisper.unity.dll. Run Steam > Verify integrity of game files.
+speed.shorter_listening_window_removed_original = Shorter listening window removed - original com.whisper.unity.dll restored.
+
+# ---- Graphics card test ----
+probe.loading_vulkan = loading Vulkan
+probe.starting = starting
+probe.starting_test = starting the test
+probe.step = step:
+probe.code_0x = , code 0x
+
+# ---- Caller voice fix ----
+voice.skipped_your_game_version_has = SKIPPED (your game version has a different PocketTTS.dll - maybe it's fixed).
+voice.fixing_portuguese_callers_being_cut = Fixing Portuguese callers being cut off after a split second ...
+voice.could_not_restore_pockettts_dll = Could not restore PocketTTS.dll (backup missing). Run Steam > Verify integrity of game files.
+voice.could_not_restore_pockettts_dll_2 = Could not restore PocketTTS.dll. Run Steam > Verify integrity of game files.
+voice.caller_voice_fix_removed_original = Caller voice fix removed - original PocketTTS.dll restored.
+
+# ---- Qwen3 on 8 GB cards ----
+qwen.skipped_your_game_version_has = SKIPPED (your game version has a different Assembly-CSharp.dll).
+qwen.lowering_qwen3_tts_limits_to = Lowering the Qwen3 TTS limits to 7680 MB graphics memory / 15000 MB RAM ...
+qwen.in_game_pick_qwen3_in = In the game, pick Qwen3 in the voice settings. If the game stutters, runs out of memory or
+qwen.crashes_switch_back_to_normal = crashes, switch back to the normal voices or run this tool again and untick this.
+qwen.could_not_restore_assembly_csharp = Could not restore Assembly-CSharp.dll (backup missing). Run Steam > Verify integrity of game files.
+qwen.could_not_restore_assembly_csharp_2 = Could not restore Assembly-CSharp.dll. Run Steam > Verify integrity of game files.
+qwen.qwen3_8_gb_patch_removed = Qwen3 8 GB patch removed - original Assembly-CSharp.dll restored.
+
+# ---- Better English speech recognition ----
+keep.skipped_your_game_version_has = SKIPPED (your game version has a different ScriptsAssDef.dll).
+keep.keeping_whisper_speech_model_for = Keeping the Whisper speech model for English instead of Moonshine ...
+keep.could_not_restore_scriptsassdef_dll = Could not restore ScriptsAssDef.dll (backup missing). Run Steam > Verify integrity of game files.
+keep.could_not_restore_scriptsassdef_dll_2 = Could not restore ScriptsAssDef.dll. Run Steam > Verify integrity of game files.
+keep.english_speech_model_patch_removed = English speech model patch removed - original ScriptsAssDef.dll restored.

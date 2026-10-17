@@ -1,0 +1,221 @@
+# SWYF Speech Fixer - Português (Brasil)
+# Format: key = text. "\n" is a line break, {0} {1} are filled in by the program. Keep them.
+# Missing lines fall back to English, so partial translations work.
+_name = Português (Brasil)
+_translator_note = Tradução feita com ajuda de IA. Avise erros para o tigerlundberg no Discord.
+
+# ---- Window ----
+ui.header_tagline = Ferramenta não oficial, não feita pelos desenvolvedores do jogo
+ui.game = Jogo
+ui.build = versão {0}
+ui.your_pc = Seu PC
+ui.unknown_cpu = Processador não detectado
+ui.choose_title = Escolha o que corrigir
+ui.choose_subtitle = As correções recomendadas para o seu PC já estão marcadas. Desmarcar uma correção instalada remove ela.
+ui.experimental = Experimental
+ui.pill_recommended = Recomendado
+ui.pill_installed = Instalado
+ui.pill_optional = Opcional
+ui.pill_not_needed = Não precisa
+ui.pill_not_available = Indisponível
+ui.pill_experimental = Experimental
+ui.pill_untested = Não testado
+ui.untested_note = Correções marcadas como NÃO TESTADO ainda não foram confirmadas no jogo. Se algo der errado, desmarque aqui e avise o Tiger (Discord: tigerlundberg) no Discord do Scam With Your Friends.
+ui.undo_all = Desfazer tudo
+ui.close = Fechar
+ui.cancel = Cancelar
+ui.nothing_to_change = Nada para alterar
+ui.apply_one = Aplicar 1 alteração
+ui.apply_n = Aplicar {0} alterações
+ui.notfound_title = Pasta do jogo não encontrada
+ui.notfound_text = Não encontrei o Scam With Your Friends automaticamente. Na Steam, clique com o botão direito no jogo > Gerenciar > Explorar arquivos locais e escolha essa pasta aqui.
+ui.browse = Procurar a pasta do jogo…
+ui.browse_description = Escolha a pasta do jogo Scam With Your Friends
+ui.notfound_wrong_folder = Essa não é a pasta do jogo (não tem "{0}" nela). Tente de novo.
+ui.running_title = Feche o jogo primeiro
+ui.running_text = O Scam With Your Friends está aberto. Feche ele completamente e aperte Tentar de novo. Nada foi alterado.
+ui.try_again = Tentar de novo
+ui.undo_title = Desfazer tudo?
+ui.undo_text = Isso coloca de volta os arquivos originais do jogo para todas as correções que esta ferramenta instalou.
+ui.undo_launch_note = Se você colocou -whisper-cpu nas opções de inicialização do jogo na Steam, isso continua lá. Remova você mesmo se quiser.
+ui.undo_yes = Sim, desfazer tudo
+ui.undo_step = Restaurando os arquivos originais do jogo
+ui.remove_step = Remover: {0}
+ui.finish_step = Concluir
+ui.applying_title = Aplicando suas alterações…
+ui.undoing_title = Desfazendo tudo…
+ui.applying_subtitle = Mantenha o jogo fechado até terminar.
+ui.working = Trabalhando…
+ui.gpu_busy = Iniciando o reconhecimento de voz na sua placa de vídeo… (até 30 segundos)
+ui.show_details = Mostrar detalhes
+ui.hide_details = Esconder detalhes
+ui.copy_details = Copiar detalhes
+ui.copy = Copiar
+ui.copied = Copiado
+ui.done_title = Pronto. {0} alterações aplicadas.
+ui.done_title_none = Pronto.
+ui.done_title_one = Pronto. 1 alteração aplicada.
+ui.done_text = Abra o jogo pela Steam como sempre. Rode esta ferramenta de novo quando quiser para mudar ou desfazer correções. Uma atualização do jogo ou 'Verificar integridade dos arquivos' da Steam pode desfazer elas - é só rodar de novo.
+ui.done_warn_title = Pronto, mas algo precisa de atenção
+ui.done_warn_text = Nem todas as etapas funcionaram por completo. Os detalhes abaixo explicam o que aconteceu.
+ui.error_title = Algo deu errado
+ui.error_text = Seus arquivos originais não foram apagados. Se continuar acontecendo, copie os detalhes e envie para o Tiger (Discord: tigerlundberg).
+ui.undone_title = Desfeito. Os arquivos originais do jogo estão de volta.
+ui.undone_text = Se você colocou -whisper-cpu nas opções de inicialização e quer tirar, remova na Steam você mesmo.
+ui.undone_partly_title = Alguns arquivos não puderam ser restaurados
+ui.undone_partly_text = Na Steam, clique com o botão direito no jogo > Propriedades > Arquivos instalados > Verificar integridade dos arquivos do jogo. Isso coloca todos os arquivos originais de volta.
+ui.one_more_step = Mais um passo
+ui.launch_title = Adicione uma opção de inicialização na Steam para o jogo não travar
+ui.launch_why = O reconhecimento de voz travou ou congelou durante o teste da sua placa de vídeo. Esta opção faz a voz usar o processador.
+ui.launch_step1 = Na Steam, clique com o botão direito em Scam With Your Friends > Propriedades
+ui.launch_step2 = Na aba Geral, cole isto em Opções de inicialização:
+ui.launch_step3 = Feche a janela. Pronto.
+ui.launch_existing = Você já tem "{0}" lá. Mantenha e adicione -whisper-cpu depois de um espaço.
+ui.open_steam = Abrir a Steam
+ui.keep_hint = Com -whisper-cpu, a voz em inglês muda para o modelo Moonshine, menos preciso. Se você joga em inglês, rode esta ferramenta de novo depois e marque "Melhor reconhecimento de voz em inglês".
+ui.cpu_option_already = Você já tem -whisper-cpu nas opções de inicialização. Ótimo - isso evita esse travamento.
+ui.loadfail_title = O Windows pode estar bloqueando os arquivos de voz do jogo
+ui.loadfail_text = Não consegui carregar ({0}). Veja Segurança do Windows > Controle de aplicativos e do navegador > Controle Inteligente de Aplicativos, e seu antivírus. Depois rode esta ferramenta de novo.
+ui.tips_title = Dicas para o seu PC
+ui.tip_remove_cpu_option = Você tem -whisper-cpu nas opções de inicialização. A voz funciona na sua placa de vídeo, então pode tentar remover para deixar a voz mais rápida. Se o jogo travar quando a voz começar, coloque de volta.
+ui.change_fixes = Mudar correções
+
+# ---- Text mode (console) ----
+main.something_went_wrong = Algo deu errado:
+main.your_original_files_were_not = Seus arquivos originais não foram apagados.
+main.press_enter_to_close = Aperte Enter para fechar...
+main.unofficial = (não oficial)
+main.fixes_speech_to_text_and = Corrige o reconhecimento de voz e as vozes das ligações em Scam With Your Friends.
+main.not_made_or_supported_by = Não é feito nem suportado pelos desenvolvedores do jogo.
+main.could_not_find_game_folder = Não encontrei a pasta do jogo automaticamente.
+main.paste_game_folder_path_steam = Cole o caminho da pasta do jogo (Steam > botão direito no jogo > Gerenciar > Explorar arquivos locais) e aperte Enter:
+main.that_doesn_t_look_like = Essa não parece ser a pasta do jogo (não tem "{0}" nela). Nada foi alterado.
+main.game_folder = Pasta do jogo:
+main.game_is_running_close_it = O jogo está aberto. Feche ele completamente e rode isto de novo. Nada foi alterado.
+main.processor_avx = Processador: AVX
+main.threads = threads
+main.choose_what_to_do_recommended = Escolha o que fazer (as opções recomendadas já estão marcadas):
+main.experimental = EXPERIMENTAL:
+main.untested = NÃO TESTADO
+main.type_number_to_tick_untick = Digite um número para marcar/desmarcar. Desmarcar algo instalado remove essa correção.
+main.enter_go_u_undo_everything = Enter = aplicar    U = desfazer tudo    Q = sair sem alterar
+main.nothing_was_changed = Nada foi alterado.
+main.ignored = (ignorado "{0}")
+main.with_whisper_cpu_english_speech = Com -whisper-cpu, a voz em inglês muda para o modelo Moonshine, menos preciso. Rode esta ferramenta de novo depois e marque "Melhor reconhecimento de voz em inglês" se você joga em inglês.
+main.tips = Dicas
+main.all_done = PRONTO.
+main.run_this_tool_again_any = Rode esta ferramenta de novo quando quiser para mudar o que está instalado, ou digite U para desfazer tudo.
+main.game_update_or_verify_integrity = Uma atualização do jogo ou 'Verificar integridade dos arquivos' pode desfazer as correções - é só rodar de novo.
+main.speech_model_files_not_found = Arquivos do modelo de voz não encontrados - pulado. (Steam > Verificar integridade dos arquivos do jogo.)
+main.faster_speech_model_already_installed = Modelo de voz mais rápido: já instalado.
+main.not_enough_free_disk_space = Sem espaço livre suficiente para o modelo mais rápido (precisa de uns {0} MB) - pulado.
+main.converting_to_faster_format = Convertendo {0} para o formato mais rápido ...
+main.done_s = pronto ({0} s)
+main.shorter_listening_window = Janela de escuta menor ...
+main.done = pronto
+main.shorter_listening_window_already_installed = Janela de escuta menor: já instalada.
+main.shorter_listening_window_skipped_your = Janela de escuta menor: PULADA (sua versão do jogo tem outro com.whisper.unity.dll).
+main.could_not_restore_old_cpu = Não consegui restaurar os arquivos da correção para CPU antiga.
+main.undone_original_game_files_restored = DESFEITO - arquivos originais do jogo restaurados.
+main.if_you_added_whisper_cpu = Se você colocou -whisper-cpu nas opções de inicialização e quer tirar, remova na Steam você mesmo.
+main.some_files_could_not_be = Alguns arquivos não puderam ser restaurados. Use Steam > Propriedades > Arquivos instalados > Verificar integridade dos arquivos do jogo.
+main.action_needed_add_steam_launch = #  AÇÃO NECESSÁRIA: adicione uma opção de inicialização       #
+main.1_open_steam_library = 1. Abra a Steam > Biblioteca.
+main.2_right_click_scam_with = 2. Clique com o botão direito em 'Scam With Your Friends' > Propriedades.
+main.3_on_general_tab_find = 3. Na aba Geral, em 'Opções de inicialização', digite:   -whisper-cpu
+main.you_already_have_there_keep = (Você já tem "{0}" lá - mantenha e adicione -whisper-cpu depois de um espaço.)
+main.4_close_properties_window = 4. Feche a janela de Propriedades.
+main.this_makes_speech_use_processor = Isso faz a voz usar o processador em vez da placa de vídeo, então o jogo não vai travar.
+main.press_enter_when_you_have = Aperte Enter quando terminar...
+main.yes = sim
+main.no = NÃO
+
+# ---- Fix list, steps and tips ----
+core.not_installed_stops_portuguese_callers = não instalada - impede que as vozes em português sejam cortadas depois de uma fração de segundo
+core.old_cpu_fix = Correção para CPU antiga
+core.your_cpu_has_no_avx = sua CPU não tem AVX, o reconhecimento de voz não roda nela
+core.not_needed_your_cpu_has = não precisa (sua CPU tem AVX2)
+core.not_needed_game_has_its = não precisa (o jogo já tem a própria correção)
+core.installed = instalada
+core.needed_for_your_cpu = necessária para sua CPU
+core.not_available_for_this_game = não disponível para esta versão do jogo
+core.faster_speech_recognition = Reconhecimento de voz mais rápido
+core.your_cpu_can_t_run = sua CPU não roda o reconhecimento de voz
+core.installed_2 = instalado
+core.partly_installed = parcialmente instalado
+core.not_installed_recommended_mostly_for = não instalado - recomendado, principalmente para PCs mais antigos
+core.caller_voice_fix = Correção das vozes das ligações
+core.not_available_for_this_game_2 = não disponível para esta versão do jogo (talvez já corrigido)
+core.qwen3_tts_on_8_gb = Qwen3 TTS em placas de vídeo de 8 GB / 16 GB de RAM
+core.installed_untick_to_remove_if = instalado - desmarque para remover se o jogo travar ou fechar
+core.off_unlocks_qwen3_voices_on = desligado - libera as vozes Qwen3 em placas que mostram um pouco menos de 8 GB. Pode travar, ficar sem memória ou fechar o jogo. Só marque se quiser testar.
+core.better_english_speech_recognition_whisper = Melhor reconhecimento de voz em inglês (Whisper em vez de Moonshine)
+core.installed_english_speech_uses_more = instalado - a voz em inglês usa o modelo Whisper, mais preciso, no processador
+core.not_installed_recommended_on_your = não instalado - recomendado: no seu PC o jogo usa o modelo Moonshine, bem menos preciso, para inglês (sua placa de vídeo está na lista dele, ou -whisper-cpu)
+core.not_installed_more_accurate_english = não instalado - voz em inglês mais precisa, mas cada frase demora mais no seu processador
+core.not_needed_now_only_matters = não precisa agora - só importa se o jogo passar a voz para o processador (-whisper-cpu)
+core.graphics_card_speech_test = Teste da placa de vídeo
+core.checks_if_speech_can_use = verifica se o reconhecimento de voz pode usar sua placa de vídeo (não altera arquivos)
+core.skipped_your_cpu_can_t = pulado, sua CPU não roda o reconhecimento de voz
+core.takes_few_seconds = - leva alguns segundos...
+core.installing = Instalando ...
+core.already_installed = Já instalada.
+core.removed_original_files_restored = Removida - arquivos originais restaurados.
+core.could_not_restore_files_run = Não consegui restaurar os arquivos. Use Steam > Verificar integridade dos arquivos do jogo.
+core.passed_on_speech_can_use = PASSOU na {0}. O reconhecimento de voz pode usar sua placa de vídeo.
+core.note_you_have_whisper_cpu = Obs.: você tem -whisper-cpu nas opções de inicialização. Pode tentar remover para deixar a voz mais rápida. Se o jogo travar quando a voz começar, coloque de volta.
+core.no_usable_vulkan_graphics_card = Nenhuma placa de vídeo Vulkan utilizável - o jogo vai usar a CPU para a voz sozinho. OK.
+core.could_not_load_game_s = Não consegui carregar os arquivos de voz do jogo ({0}).
+core.windows_may_be_blocking_them = O Windows pode estar bloqueando: veja Segurança do Windows > Controle de aplicativos e do navegador > Controle Inteligente de Aplicativos, e seu antivírus. Depois rode esta ferramenta de novo.
+core.froze = congelou
+core.crashed = travou
+core.failed_speech_engine_during_graphics = FALHOU - o reconhecimento de voz {0} durante o teste da placa de vídeo{1}.
+core.without_whisper_cpu_launch_option = Sem a opção de inicialização -whisper-cpu, o jogo provavelmente vai travar quando a voz começar.
+core.you_already_have_launch_option = Você já tem a opção de inicialização -whisper-cpu. Ótimo - isso evita esse travamento.
+core.your_pc_is_on_slower = Seu PC é mais fraco para este jogo, então:
+core.banditcam_watermark_already_off_good = Marca d'água do BanditCam: já está DESLIGADA. Ótimo.
+core.turn_off_banditcam_watermark_open = DESLIGUE a MARCA D'ÁGUA do BanditCam: abra o app BanditCam no computador dentro do jogo e clique na opção da marca d'água. Depois de cada ligação o jogo recodifica a gravação para colocar a marca d'água, e isso deixa a voz lenta justo quando a próxima ligação começa.
+core.turn_on_vsync_or_cap = Ligue o VSync ou limite o FPS (o jogo roda sem limite por padrão).
+core.speak_after_caller_has_finished = Fale depois que a pessoa na ligação terminar, e espere alguns segundos.
+core.speak_after_caller_has_finished_2 = Fale depois que a pessoa na ligação terminar de falar.
+core.your_cpu_can_t_run_2 = Sua CPU não roda o reconhecimento de voz do jogo, mas você pode digitar para quem liga.
+
+# ---- Old CPU fix ----
+cpu.removed_old_cpu_fix_s = Removi o arquivo da correção antiga para CPU - o jogo agora tem a própria correção.
+cpu.disabled_old_bepinex_loader_from = Desativei o carregador BepInEx da primeira versão da correção (ele causava travamento).
+
+# ---- Faster speech recognition ----
+speed.original_speech_model_files_restored = Arquivos originais do modelo de voz restaurados.
+speed.could_not_restore_everything_run = Não consegui restaurar tudo. Use Steam > Propriedades > Arquivos instalados > Verificar integridade dos arquivos do jogo.
+speed.could_not_restore_com_whisper = Não consegui restaurar o com.whisper.unity.dll. Use Steam > Verificar integridade dos arquivos do jogo.
+speed.shorter_listening_window_removed_original = Janela de escuta menor removida - com.whisper.unity.dll original restaurado.
+
+# ---- Graphics card test ----
+probe.loading_vulkan = carregando o Vulkan
+probe.starting = iniciando
+probe.starting_test = iniciando o teste
+probe.step = etapa:
+probe.code_0x = , código 0x
+
+# ---- Caller voice fix ----
+voice.skipped_your_game_version_has = PULADA (sua versão do jogo tem outro PocketTTS.dll - talvez já esteja corrigido).
+voice.fixing_portuguese_callers_being_cut = Corrigindo as vozes em português cortadas depois de uma fração de segundo ...
+voice.could_not_restore_pockettts_dll = Não consegui restaurar o PocketTTS.dll (backup não encontrado). Use Steam > Verificar integridade dos arquivos do jogo.
+voice.could_not_restore_pockettts_dll_2 = Não consegui restaurar o PocketTTS.dll. Use Steam > Verificar integridade dos arquivos do jogo.
+voice.caller_voice_fix_removed_original = Correção das vozes removida - PocketTTS.dll original restaurado.
+
+# ---- Qwen3 on 8 GB cards ----
+qwen.skipped_your_game_version_has = PULADA (sua versão do jogo tem outro Assembly-CSharp.dll).
+qwen.lowering_qwen3_tts_limits_to = Baixando os limites do Qwen3 TTS para 7680 MB de memória de vídeo / 15000 MB de RAM ...
+qwen.in_game_pick_qwen3_in = No jogo, escolha Qwen3 nas configurações de voz. Se o jogo travar, ficar sem memória ou
+qwen.crashes_switch_back_to_normal = fechar sozinho, volte para as vozes normais ou rode esta ferramenta de novo e desmarque isto.
+qwen.could_not_restore_assembly_csharp = Não consegui restaurar o Assembly-CSharp.dll (backup não encontrado). Use Steam > Verificar integridade dos arquivos do jogo.
+qwen.could_not_restore_assembly_csharp_2 = Não consegui restaurar o Assembly-CSharp.dll. Use Steam > Verificar integridade dos arquivos do jogo.
+qwen.qwen3_8_gb_patch_removed = Patch do Qwen3 8 GB removido - Assembly-CSharp.dll original restaurado.
+
+# ---- Better English speech recognition ----
+keep.skipped_your_game_version_has = PULADA (sua versão do jogo tem outro ScriptsAssDef.dll).
+keep.keeping_whisper_speech_model_for = Mantendo o modelo de voz Whisper para inglês em vez do Moonshine ...
+keep.could_not_restore_scriptsassdef_dll = Não consegui restaurar o ScriptsAssDef.dll (backup não encontrado). Use Steam > Verificar integridade dos arquivos do jogo.
+keep.could_not_restore_scriptsassdef_dll_2 = Não consegui restaurar o ScriptsAssDef.dll. Use Steam > Verificar integridade dos arquivos do jogo.
+keep.english_speech_model_patch_removed = Patch do modelo de voz em inglês removido - ScriptsAssDef.dll original restaurado.

@@ -32,13 +32,13 @@ static partial class Fixer
     {
         string dll = PocketPath(gameDir);
         string h = File.Exists(dll) ? Sha256(dll) : null;
-        if (h == PocketPatched) { Line(Tr("  Already installed.", "  Já instalada.")); return; }
+        if (h == PocketPatched) { Line(("  " + T("core.already_installed"))); return; }
         if (h != PocketOriginal)
         {
-            Line(Tr("  SKIPPED (your game version has a different PocketTTS.dll - maybe it's fixed).", "  PULADA (sua versão do jogo tem outro PocketTTS.dll - talvez já esteja corrigido)."));
+            Line(("  " + T("voice.skipped_your_game_version_has")));
             return;
         }
-        Console.Write(Tr("  Fixing Portuguese callers being cut off after a split second ... ", "  Corrigindo as vozes em português cortadas depois de uma fração de segundo ... "));
+        Out(("  " + T("voice.fixing_portuguese_callers_being_cut") + " "));
         byte[] data = File.ReadAllBytes(dll);
         for (int i = 0; i < LatchLen; i++) data[LatchAt + i] = 0x00;               // nop
         byte[] nl = Hex(NewLatch);
@@ -51,7 +51,7 @@ static partial class Fixer
         File.Copy(tmp, dll, true);
         File.Delete(tmp);
         if (Sha256(dll) != PocketPatched) throw new Exception("Writing PocketTTS.dll failed. Run Steam > Verify integrity of game files.");
-        Line(Tr("done", "pronto"));
+        Line(T("main.done"));
     }
 
     static bool VoiceFixInstalled(string gameDir)
@@ -70,13 +70,13 @@ static partial class Fixer
         }
         if (!File.Exists(bak) || Sha256(bak) != PocketOriginal)
         {
-            Line(Tr("  Could not restore PocketTTS.dll (backup missing). Run Steam > Verify integrity of game files.", "  Não consegui restaurar o PocketTTS.dll (backup não encontrado). Use Steam > Verificar integridade dos arquivos do jogo."));
+            Line(("  " + T("voice.could_not_restore_pockettts_dll")));
             return 1;
         }
         File.Copy(bak, dll, true);
-        if (Sha256(dll) != PocketOriginal) { Line(Tr("  Could not restore PocketTTS.dll. Run Steam > Verify integrity of game files.", "  Não consegui restaurar o PocketTTS.dll. Use Steam > Verificar integridade dos arquivos do jogo.")); return 1; }
+        if (Sha256(dll) != PocketOriginal) { Line(("  " + T("voice.could_not_restore_pockettts_dll_2"))); return 1; }
         TryDelete(bak);
-        Line(Tr("  Caller voice fix removed - original PocketTTS.dll restored.", "  Correção das vozes removida - PocketTTS.dll original restaurado."));
+        Line(("  " + T("voice.caller_voice_fix_removed_original")));
         return 0;
     }
 }

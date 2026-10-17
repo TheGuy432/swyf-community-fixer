@@ -58,6 +58,35 @@ static partial class Fixer
         return ids;
     }
 
+    // Display names of the graphics adapters (registry DriverDesc), for the window's "Your PC" line.
+    static List<string> GraphicsCardNames()
+    {
+        var names = new List<string>();
+        if (assumePc != null) { string[] p = assumePc.Split('|'); if (p.Length > 1) names.Add(p[1]); return names; }
+        if (IsUnix) return names;
+        try
+        {
+            using (RegistryKey cls = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"))
+            {
+                if (cls == null) return names;
+                foreach (string sub in cls.GetSubKeyNames())
+                {
+                    try
+                    {
+                        using (RegistryKey k = cls.OpenSubKey(sub))
+                        {
+                            string d = k == null ? null : k.GetValue("DriverDesc") as string;
+                            if (!string.IsNullOrEmpty(d) && !names.Contains(d)) names.Add(d);
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+        catch { }
+        return names;
+    }
+
     // True if the game will run speech on the CPU (and so use Moonshine for English) on this PC.
     static bool GameUsesCpuSpeech(string launchOptions)
     {
@@ -73,14 +102,13 @@ static partial class Fixer
     {
         string dll = SadPath(gameDir);
         string h = File.Exists(dll) ? Sha256(dll) : null;
-        if (h == SadPatched) { Line(Tr("  Already installed.", "  Já instalada.")); return; }
+        if (h == SadPatched) { Line(("  " + T("core.already_installed"))); return; }
         if (h != SadOriginal)
         {
-            Line(Tr("  SKIPPED (your game version has a different ScriptsAssDef.dll).", "  PULADA (sua versão do jogo tem outro ScriptsAssDef.dll)."));
+            Line(("  " + T("keep.skipped_your_game_version_has")));
             return;
         }
-        Console.Write(Tr("  Keeping the Whisper speech model for English instead of Moonshine ... ",
-                         "  Mantendo o modelo de voz Whisper para inglês em vez do Moonshine ... "));
+        Out(("  " + T("keep.keeping_whisper_speech_model_for") + " "));
         byte[] data = File.ReadAllBytes(dll);
         if (data[KeepCpuCompatAt] != 0x04 || data[KeepCpuEnvAt] != 0x05) throw new Exception("Unexpected ScriptsAssDef.dll contents; not changed.");
         data[KeepCpuCompatAt] = 0x16;
@@ -90,7 +118,7 @@ static partial class Fixer
         if (!File.Exists(bak) || Sha256(bak) != SadOriginal) File.Copy(dll, bak, true);
         WriteAtomic(dll, data);
         if (Sha256(dll) != SadPatched) throw new Exception("Writing ScriptsAssDef.dll failed. Run Steam > Verify integrity of game files.");
-        Line(Tr("done", "pronto"));
+        Line(T("main.done"));
     }
 
     static int UninstallWhisperKeep(string gameDir)
@@ -103,20 +131,17 @@ static partial class Fixer
         }
         if (!File.Exists(bak) || Sha256(bak) != SadOriginal)
         {
-            Line(Tr("  Could not restore ScriptsAssDef.dll (backup missing). Run Steam > Verify integrity of game files.",
-                    "  Não consegui restaurar o ScriptsAssDef.dll (backup não encontrado). Use Steam > Verificar integridade dos arquivos do jogo."));
+            Line(("  " + T("keep.could_not_restore_scriptsassdef_dll")));
             return 1;
         }
         File.Copy(bak, dll, true);
         if (Sha256(dll) != SadOriginal)
         {
-            Line(Tr("  Could not restore ScriptsAssDef.dll. Run Steam > Verify integrity of game files.",
-                    "  Não consegui restaurar o ScriptsAssDef.dll. Use Steam > Verificar integridade dos arquivos do jogo."));
+            Line(("  " + T("keep.could_not_restore_scriptsassdef_dll_2")));
             return 1;
         }
         TryDelete(bak);
-        Line(Tr("  English speech model patch removed - original ScriptsAssDef.dll restored.",
-                "  Patch do modelo de voz em inglês removido - ScriptsAssDef.dll original restaurado."));
+        Line(("  " + T("keep.english_speech_model_patch_removed")));
         return 0;
     }
 }

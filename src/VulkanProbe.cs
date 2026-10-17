@@ -145,12 +145,12 @@ static partial class Fixer
                 if (l.StartsWith("GPUOK ") && gpu == "") gpu = l.Substring(6);
             }
             r.GpuName = gpu;
-            string step = lastStage == "registry" ? Tr("loading Vulkan", "carregando o Vulkan") : lastStage.StartsWith("init ") ? Tr("starting ", "iniciando ") + lastStage.Substring(5) : Tr("starting the test", "iniciando o teste");
-            if (!exited) { r.Outcome = ProbeOutcome.Hung; r.Detail = Tr("step: ", "etapa: ") + step; }
+            string step = lastStage == "registry" ? T("probe.loading_vulkan") : lastStage.StartsWith("init ") ? (T("probe.starting") + " ") + lastStage.Substring(5) : T("probe.starting_test");
+            if (!exited) { r.Outcome = ProbeOutcome.Hung; r.Detail = (T("probe.step") + " ") + step; }
             else if (p.ExitCode == 0) r.Outcome = ProbeOutcome.Passed;
             else if (p.ExitCode == 2) r.Outcome = ProbeOutcome.NoGpu;
             else if (p.ExitCode == 3) { r.Outcome = ProbeOutcome.LoadFailed; r.Detail = text.Trim(); }
-            else { r.Outcome = ProbeOutcome.Crashed; r.Detail = Tr("step: ", "etapa: ") + step + Tr(", code 0x", ", código 0x") + p.ExitCode.ToString("X"); }
+            else { r.Outcome = ProbeOutcome.Crashed; r.Detail = (T("probe.step") + " ") + step + T("probe.code_0x") + p.ExitCode.ToString("X"); }
         }
         return r;
     }

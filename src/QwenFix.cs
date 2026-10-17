@@ -24,14 +24,13 @@ static partial class Fixer
     {
         string dll = GameAsmPath(gameDir);
         string h = File.Exists(dll) ? Sha256(dll) : null;
-        if (h == AsmPatched) { Line(Tr("  Already installed.", "  Já instalada.")); return; }
+        if (h == AsmPatched) { Line(("  " + T("core.already_installed"))); return; }
         if (h != AsmOriginal)
         {
-            Line(Tr("  SKIPPED (your game version has a different Assembly-CSharp.dll).", "  PULADA (sua versão do jogo tem outro Assembly-CSharp.dll)."));
+            Line(("  " + T("qwen.skipped_your_game_version_has")));
             return;
         }
-        Console.Write(Tr("  Lowering the Qwen3 TTS limits to 7680 MB graphics memory / 15000 MB RAM ... ",
-                         "  Baixando os limites do Qwen3 TTS para 7680 MB de memória de vídeo / 15000 MB de RAM ... "));
+        Out(("  " + T("qwen.lowering_qwen3_tts_limits_to") + " "));
         byte[] data = File.ReadAllBytes(dll);
         BitConverter.GetBytes(QwenVramNew).CopyTo(data, QwenVramAt);
         BitConverter.GetBytes(QwenRamNew).CopyTo(data, QwenRamAt);
@@ -43,11 +42,9 @@ static partial class Fixer
         File.Copy(tmp, dll, true);
         File.Delete(tmp);
         if (Sha256(dll) != AsmPatched) throw new Exception("Writing Assembly-CSharp.dll failed. Run Steam > Verify integrity of game files.");
-        Line(Tr("done", "pronto"));
-        Line(Tr("  In the game, pick Qwen3 in the voice settings. If the game stutters, runs out of memory or",
-                "  No jogo, escolha Qwen3 nas configurações de voz. Se o jogo travar, ficar sem memória ou"));
-        Line(Tr("  crashes, switch back to the normal voices or run this tool again and untick this.",
-                "  fechar sozinho, volte para as vozes normais ou rode esta ferramenta de novo e desmarque isto."));
+        Line(T("main.done"));
+        Line(("  " + T("qwen.in_game_pick_qwen3_in")));
+        Line(("  " + T("qwen.crashes_switch_back_to_normal")));
     }
 
     static int UninstallQwenFix(string gameDir)
@@ -60,20 +57,17 @@ static partial class Fixer
         }
         if (!File.Exists(bak) || Sha256(bak) != AsmOriginal)
         {
-            Line(Tr("  Could not restore Assembly-CSharp.dll (backup missing). Run Steam > Verify integrity of game files.",
-                    "  Não consegui restaurar o Assembly-CSharp.dll (backup não encontrado). Use Steam > Verificar integridade dos arquivos do jogo."));
+            Line(("  " + T("qwen.could_not_restore_assembly_csharp")));
             return 1;
         }
         File.Copy(bak, dll, true);
         if (Sha256(dll) != AsmOriginal)
         {
-            Line(Tr("  Could not restore Assembly-CSharp.dll. Run Steam > Verify integrity of game files.",
-                    "  Não consegui restaurar o Assembly-CSharp.dll. Use Steam > Verificar integridade dos arquivos do jogo."));
+            Line(("  " + T("qwen.could_not_restore_assembly_csharp_2")));
             return 1;
         }
         TryDelete(bak);
-        Line(Tr("  Qwen3 8 GB patch removed - original Assembly-CSharp.dll restored.",
-                "  Patch do Qwen3 8 GB removido - Assembly-CSharp.dll original restaurado."));
+        Line(("  " + T("qwen.qwen3_8_gb_patch_removed")));
         return 0;
     }
 }

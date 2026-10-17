@@ -1,16 +1,19 @@
-﻿// SWYF Speech Fixer v4.2 (UNOFFICIAL) - for Scam With Your Friends
-// One tool for the community fixes. The player picks what to install from a menu:
+﻿// SWYF Speech Fixer v4.4 (UNOFFICIAL) - for Scam With Your Friends
+// One tool for the community fixes. Double-click: a window to pick fixes (Gui.cs). --console: the same in text mode.
 //   1. Old CPU fix (CPUs without AVX2, game build 0.1.71)
 //   2. Speech speed-up (8-bit speech model + listening window sized to the phrase)
 //   3. Caller voice fix (Portuguese callers cut off after ~0.3 s, game 0.1.74)
-//   4. Vulkan speech test - tells the player to add -whisper-cpu if their graphics card crashes it
+//   4. EXPERIMENTAL: Qwen3 TTS on 8 GB graphics cards
+//   5. Better English speech recognition (Whisper instead of Moonshine on CPU speech, game 0.1.74)
+//   6. Vulkan speech test - tells the player to add -whisper-cpu if their graphics card crashes it
 //   then advice for lower-end PCs (BanditCam watermark, FPS cap).
-// English and Brazilian Portuguese. Run again to change the selection or to undo everything.
+// Texts come from lang/<code>.txt (embedded). Run again to change the selection or to undo everything.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -22,27 +25,21 @@ static partial class Fixer
     const string GameExe = "Scam With Your Friends.exe";
     const string PrefsKey = @"Software\Jatater Worldwide\Scam With Your Friends";
 
-    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    [DllImport("kernel32.dll")]
     static extern bool IsProcessorFeaturePresent(uint feature);
+    [DllImport("kernel32.dll")] static extern bool AllocConsole();
+    [DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int which);
 
-    static string assumeCpu, simulateProbe; // only settable in test builds (SWYF_TEST)
+    // only settable in test builds (SWYF_TEST)
+    static string assumeCpu, simulateProbe, assumePc;
     static int assumeThreads;
 
-    // ---- Language ----
-    static bool Pt;
-    static string Tr(string en, string pt) { return Pt ? pt : en; }
-
-    static bool DetectPortuguese()
-    {
-        try { if (CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt") return true; } catch { }
-        string game = ReadPrefString("Kolkata.CallLanguage") ?? ReadPrefString("LanguageManager.CurrentLanguage");
-        return game != null && game.StartsWith("pt", StringComparison.OrdinalIgnoreCase);
-    }
-
+    [STAThread]
     static int Main(string[] args)
     {
         string gameDir = null, lang = null;
-        bool uninstallFlag = false, noPause = false;
+        bool uninstallFlag = false, noPause = false, console = false;
+        var guiTest = new List<string>();
         for (int i = 0; i < args.Length; i++)
         {
             string a = args[i];
@@ -55,8 +52,9 @@ static partial class Fixer
                 try { return ProbeMain(dir, sim); }
                 catch (Exception e) { Console.WriteLine("PROBEERROR " + e.Message); return 4; }
             }
-            if (a == "--convert" && i + 2 < args.Length) // test hook
+            if (a == "--convert" && i + 2 < args.Length) // test hook (used by the GitHub build check)
             {
+                EnsureConsole();
                 try { Quantize(args[i + 1], args[i + 2]); Console.WriteLine("converted"); return 0; }
                 catch (Exception e) { Console.WriteLine("error: " + e.Message); return 1; }
             }
@@ -65,15 +63,23 @@ static partial class Fixer
             if (a.StartsWith("--simulate-probe=")) { simulateProbe = a.Substring(17); continue; }
             if (a.StartsWith("--assume-gpu=")) { assumeGpu = a.Substring(13); continue; }
             if (a.StartsWith("--assume-threads=")) { assumeThreads = int.Parse(a.Substring(17)); continue; }
+            if (a.StartsWith("--assume-pc=")) { assumePc = a.Substring(12); continue; }
+            if (a.StartsWith("--test-")) { guiTest.Add(a); continue; }
 #endif
             if (a.StartsWith("--lang=")) lang = a.Substring(7).ToLowerInvariant();
             else if (a == "--uninstall") uninstallFlag = true;
             else if (a == "--no-pause") noPause = true;
+            else if (a == "--console") console = true;
             else gameDir = a.Trim(new[] { '"' });
         }
-        Pt = lang != null ? lang.StartsWith("pt") : DetectPortuguese();
-        try { Console.OutputEncoding = new UTF8Encoding(false); } catch { }
+        LoadLanguages();
+        SetLanguage(lang ?? DetectLanguage());
 
+        if (!console && !uninstallFlag)
+            return RunWindow(gameDir, guiTest);
+
+        EnsureConsole();
+        try { Console.OutputEncoding = new UTF8Encoding(false); } catch { }
         try { Console.Title = "SWYF Speech Fixer v" + Version; } catch { }
         Banner();
         int code;
@@ -81,336 +87,151 @@ static partial class Fixer
         catch (Exception e)
         {
             Line("");
-            Line(Tr("Something went wrong: ", "Algo deu errado: ") + e.Message);
-            Line(Tr("Your original files were not removed.", "Seus arquivos originais não foram apagados."));
+            Line((T("main.something_went_wrong") + " ") + e.Message);
+            Line(T("main.your_original_files_were_not"));
             code = 1;
         }
-        if (!noPause) { Line(""); Console.Write(Tr("Press Enter to close...", "Aperte Enter para fechar...")); Console.ReadLine(); }
+        if (!noPause) { Line(""); Out(T("main.press_enter_to_close")); Console.ReadLine(); }
         return code;
+    }
+
+    // The .exe is a window app; text mode needs a console. Keep redirected output (pipes/files) as it is.
+    static void EnsureConsole()
+    {
+        if (IsUnix) return;
+        try { if (GetStdHandle(-11) == IntPtr.Zero) AllocConsole(); } catch { }
     }
 
     static void Banner()
     {
         Line("==============================================================");
-        Line(" SWYF Speech Fixer v" + Version + Tr(" (unofficial)", " (não oficial)"));
-        Line(Tr(" Fixes speech-to-text and caller voices in Scam With Your Friends.",
-                " Corrige o reconhecimento de voz e as vozes das ligações em Scam With Your Friends."));
-        Line(Tr(" Not made or supported by the game's developers.",
-                " Não é feito nem suportado pelos desenvolvedores do jogo."));
+        Line(" SWYF Speech Fixer v" + Version + " " + T("main.unofficial"));
+        Line(" " + T("main.fixes_speech_to_text_and"));
+        Line(" " + T("main.not_made_or_supported_by"));
         Line("==============================================================");
         Line("");
     }
 
-    // ---- Menu items ----
-    sealed class Item
+    // Prints text word-wrapped to the console width, every line starting with indent.
+    static void Wrapped(string indent, string text) { Wrapped(indent, indent, text); }
+    static void Wrapped(string first, string next, string text)
     {
-        public string Name, Status;
-        public bool Available, Installed, Wanted;
+        string indent = first;
+        var line = new StringBuilder();
+        foreach (string w in text.Split(' '))
+        {
+            if (line.Length > 0 && indent.Length + line.Length + 1 + w.Length > 100) { Line(indent + line); line.Length = 0; indent = next; }
+            if (line.Length > 0) line.Append(' ');
+            line.Append(w);
+        }
+        if (line.Length > 0) Line(indent + line);
     }
 
-    static int Run(string gameDir, bool uninstallFlag)
+    // Finds the game folder; null (after printing why) if it isn't usable.
+    static string ConsoleGameDir(string gameDir)
     {
         gameDir = gameDir ?? FindGameDir();
         if (gameDir == null)
         {
-            Line(Tr("Could not find the game folder automatically.", "Não encontrei a pasta do jogo automaticamente."));
-            Line(Tr("Paste the game folder path (Steam > right-click game > Manage > Browse local files), then press Enter:",
-                    "Cole o caminho da pasta do jogo (Steam > botão direito no jogo > Gerenciar > Explorar arquivos locais) e aperte Enter:"));
-            Console.Write("> ");
+            Line(T("main.could_not_find_game_folder"));
+            Line(T("main.paste_game_folder_path_steam"));
+            Out("> ");
             gameDir = (Console.ReadLine() ?? "").Trim().Trim(new[] { '"' });
         }
-        if (!File.Exists(Path.Combine(gameDir, GameExe)))
+        if (!IsGameDir(gameDir))
         {
-            Line(Tr("That doesn't look like the game folder (no \"" + GameExe + "\" there). Nothing was changed.",
-                    "Essa não parece ser a pasta do jogo (não tem \"" + GameExe + "\" nela). Nada foi alterado."));
+            Line(T("main.that_doesn_t_look_like", GameExe));
+            return null;
+        }
+        return gameDir;
+    }
+
+    static bool IsGameDir(string d) { return !string.IsNullOrEmpty(d) && File.Exists(Path.Combine(d, GameExe)); }
+    static bool GameRunning() { return Process.GetProcessesByName("Scam With Your Friends").Length > 0; }
+
+    static int Run(string gameDir, bool uninstallFlag)
+    {
+        gameDir = ConsoleGameDir(gameDir);
+        if (gameDir == null) return 1;
+        Line((T("main.game_folder") + " ") + gameDir);
+        if (GameRunning())
+        {
+            Line(T("main.game_is_running_close_it"));
             return 1;
         }
-        Line(Tr("Game folder: ", "Pasta do jogo: ") + gameDir);
-        if (Process.GetProcessesByName("Scam With Your Friends").Length > 0)
-        {
-            Line(Tr("The game is running. Close it completely and run this again. Nothing was changed.",
-                    "O jogo está aberto. Feche ele completamente e rode isto de novo. Nada foi alterado."));
-            return 1;
-        }
+        string modelDir = Path.Combine(gameDir, WhisperRel), dll = Path.Combine(gameDir, WhisperDllRel);
+        if (uninstallFlag) { DisableOldBepInEx(gameDir); return UndoAll(gameDir, modelDir, dll); }
 
-        string modelDir = Path.Combine(gameDir, WhisperRel);
-        string dll = Path.Combine(gameDir, WhisperDllRel);
-        bool hasAvx, hasAvx2;
-        GetCpu(out hasAvx, out hasAvx2);
-        DisableOldBepInEx(gameDir);
-        if (uninstallFlag) return UndoAll(gameDir, modelDir, dll);
-
-        Line(Tr("Processor: AVX ", "Processador: AVX ") + YesNo(hasAvx) + ", AVX2 " + YesNo(hasAvx2) + ", "
-             + Environment.ProcessorCount + Tr(" threads", " threads"));
-
-        // ---- Work out what is possible / installed ----
-        CpuFixState cpuState = hasAvx ? GetCpuFixState(gameDir, hasAvx2) : CpuFixState.NotNeeded;
-        var cpu = new Item();
-        var speed = new Item();
-        var voice = new Item();
-        var qwen = new Item();
-        var keep = new Item();
-        var gpu = new Item();
-        var items = new[] { cpu, speed, voice, qwen, keep, gpu };
-
-        string dllHash = File.Exists(dll) ? Sha256(dll) : null;
-        bool speedInstalled = ModelsConverted(modelDir) || dllHash == DllPatched;
-        bool speedTodo = dllHash == DllOriginal;
-        foreach (string n in ModelNames)
-        {
-            string p = Path.Combine(modelDir, n);
-            if (File.Exists(p) && ReadFtype(p) == FtypeF16) speedTodo = true;
-        }
-        string pocketHash = File.Exists(PocketPath(gameDir)) ? Sha256(PocketPath(gameDir)) : null;
-        string asmHash = File.Exists(GameAsmPath(gameDir)) ? Sha256(GameAsmPath(gameDir)) : null;
-        string sadHash = File.Exists(SadPath(gameDir)) ? Sha256(SadPath(gameDir)) : null;
-        bool cpuSpeech = GameUsesCpuSpeech(ReadLaunchOptions());
-        bool strongCpu = hasAvx2 && (assumeThreads > 0 ? assumeThreads : Environment.ProcessorCount) >= 8;
-
-        Action describe = () =>
-        {
-            cpu.Name = Tr("Old CPU fix", "Correção para CPU antiga");
-            cpu.Installed = cpuState == CpuFixState.Installed;
-            cpu.Available = cpuState == CpuFixState.Installed || cpuState == CpuFixState.Installable;
-            cpu.Status = !hasAvx ? Tr("your CPU has no AVX, speech can't run on it", "sua CPU não tem AVX, o reconhecimento de voz não roda nela")
-                : cpuState == CpuFixState.NotNeeded ? Tr("not needed (your CPU has AVX2)", "não precisa (sua CPU tem AVX2)")
-                : cpuState == CpuFixState.FixedByDevelopers ? Tr("not needed (the game has its own fix now)", "não precisa (o jogo já tem a própria correção)")
-                : cpuState == CpuFixState.Installed ? Tr("installed", "instalada")
-                : cpuState == CpuFixState.Installable ? Tr("needed for your CPU", "necessária para sua CPU")
-                : Tr("not available for this game version", "não disponível para esta versão do jogo");
-
-            speed.Name = Tr("Faster speech recognition", "Reconhecimento de voz mais rápido");
-            speed.Installed = speedInstalled;
-            speed.Available = hasAvx && (speedInstalled || speedTodo);
-            speed.Status = !hasAvx ? Tr("your CPU can't run speech recognition", "sua CPU não roda o reconhecimento de voz")
-                : speedInstalled && !speedTodo ? Tr("installed", "instalado")
-                : speedInstalled ? Tr("partly installed", "parcialmente instalado")
-                : speedTodo ? Tr("not installed - recommended, mostly for older PCs", "não instalado - recomendado, principalmente para PCs mais antigos")
-                : Tr("not available for this game version", "não disponível para esta versão do jogo");
-
-            voice.Name = Tr("Caller voice fix", "Correção das vozes das ligações");
-            voice.Installed = pocketHash == PocketPatched;
-            voice.Available = pocketHash == PocketPatched || pocketHash == PocketOriginal;
-            voice.Status = voice.Installed ? Tr("installed", "instalada")
-                : voice.Available ? Tr("not installed - stops Portuguese callers being cut off after a split second",
-                                       "não instalada - impede que as vozes em português sejam cortadas depois de uma fração de segundo")
-                : Tr("not available for this game version (maybe already fixed)", "não disponível para esta versão do jogo (talvez já corrigido)");
-
-            qwen.Name = Tr("EXPERIMENTAL: Qwen3 TTS on 8 GB graphics cards / 16 GB RAM",
-                           "EXPERIMENTAL: Qwen3 TTS em placas de vídeo de 8 GB / 16 GB de RAM");
-            qwen.Installed = asmHash == AsmPatched;
-            qwen.Available = asmHash == AsmPatched || asmHash == AsmOriginal;
-            qwen.Status = qwen.Installed ? Tr("installed - untick to remove if the game stutters or crashes",
-                                              "instalado - desmarque para remover se o jogo travar ou fechar")
-                : qwen.Available ? Tr("off - unlocks the Qwen3 voices on cards that report just under 8 GB. May stutter,\n"
-                                      + "          run out of memory or crash. Only tick this if you want to try it.",
-                                      "desligado - libera as vozes Qwen3 em placas que mostram um pouco menos de 8 GB. Pode\n"
-                                      + "          travar, ficar sem memória ou fechar o jogo. Só marque se quiser testar.")
-                : Tr("not available for this game version", "não disponível para esta versão do jogo");
-
-            keep.Name = Tr("Better English speech recognition (Whisper instead of Moonshine)",
-                           "Melhor reconhecimento de voz em inglês (Whisper em vez de Moonshine)");
-            keep.Installed = sadHash == SadPatched;
-            keep.Available = hasAvx && (sadHash == SadPatched || sadHash == SadOriginal);
-            keep.Status = keep.Installed ? Tr("installed - English speech uses the more accurate Whisper model on your processor",
-                                              "instalado - a voz em inglês usa o modelo Whisper, mais preciso, no processador")
-                : !keep.Available ? Tr("not available for this game version", "não disponível para esta versão do jogo")
-                : cpuSpeech && strongCpu ? Tr("not installed - recommended: on your PC the game uses the much less accurate\n"
-                                              + "          Moonshine model for English (your graphics card is on its list, or -whisper-cpu)",
-                                              "não instalado - recomendado: no seu PC o jogo usa o modelo Moonshine, bem menos\n"
-                                              + "          preciso, para inglês (sua placa de vídeo está na lista dele, ou -whisper-cpu)")
-                : cpuSpeech ? Tr("not installed - more accurate English speech, but each sentence takes longer on your processor",
-                                 "não instalado - voz em inglês mais precisa, mas cada frase demora mais no seu processador")
-                : Tr("not needed now - only matters if the game moves speech to the processor (-whisper-cpu)",
-                     "não precisa agora - só importa se o jogo passar a voz para o processador (-whisper-cpu)");
-
-            gpu.Name = Tr("Graphics card speech test", "Teste da placa de vídeo");
-            gpu.Installed = false;
-            gpu.Available = hasAvx;
-            gpu.Status = hasAvx ? Tr("checks if speech can use your graphics card (changes no files)",
-                                     "verifica se o reconhecimento de voz pode usar sua placa de vídeo (não altera arquivos)")
-                : Tr("skipped, your CPU can't run speech recognition", "pulado, sua CPU não roda o reconhecimento de voz");
-        };
-        describe();
-        foreach (Item it in items) it.Wanted = it.Available;   // recommended: everything that applies
-        qwen.Wanted = qwen.Installed;                           // experimental: only when the player ticks it
-        keep.Wanted = keep.Installed || (keep.Available && cpuSpeech && strongCpu);
+        Session s = Detect(gameDir);
+        Line((T("main.processor_avx") + " ") + YesNo(s.HasAvx) + ", AVX2 " + YesNo(s.HasAvx2) + ", "
+             + s.Threads + " " + T("main.threads"));
 
         // ---- Menu ----
+        Item[] items = s.Items;
         while (true)
         {
             Line("");
-            Line(Tr("Choose what to do (recommended choices are already ticked):",
-                    "Escolha o que fazer (as opções recomendadas já estão marcadas):"));
+            Line(T("main.choose_what_to_do_recommended"));
             for (int i = 0; i < items.Length; i++)
             {
                 Item it = items[i];
                 string box = !it.Available ? "[ ]" : it.Wanted ? "[X]" : "[ ]";
                 string mark = it.Available ? (i + 1) + "." : "  ";
-                Line("  " + mark + " " + box + " " + it.Name);
-                Line("          " + it.Status);
+                string name = it.Experimental ? (T("main.experimental") + " ") + it.Name : it.Name;
+                if (it.Untested && it.Available) name += " [" + T("main.untested") + "]";
+                Line("  " + mark + " " + box + " " + name);
+                Wrapped("          ", it.Status);
             }
             Line("");
-            Line(Tr("  Type a number to tick/untick it. Unticking something that is installed removes it.",
-                    "  Digite um número para marcar/desmarcar. Desmarcar algo instalado remove essa correção."));
-            Line(Tr("  Enter = go    U = undo everything    Q = quit without changes    P = Português",
-                    "  Enter = aplicar    U = desfazer tudo    Q = sair sem alterar    E = English"));
-            Console.Write("> ");
+            Line("  " + T("main.type_number_to_tick_untick"));
+            Line("  " + T("main.enter_go_u_undo_everything")
+                 + "    L = " + LanguageMenuHint());
+            Out("> ");
             string input = Console.ReadLine();
             if (input == null) break;                       // no console input (scripted run): use the ticks
             input = input.Trim().ToUpperInvariant();
             if (input == "") break;
-            if (input == "Q") { Line(Tr("Nothing was changed.", "Nada foi alterado.")); return 0; }
-            if (input == "U") return UndoAll(gameDir, modelDir, dll);
-            if (input == "P" || input == "E") { Pt = input == "P"; describe(); continue; }
+            if (input == "Q") { Line(T("main.nothing_was_changed")); return 0; }
+            if (input == "U") { DisableOldBepInEx(gameDir); return UndoAll(gameDir, modelDir, dll); }
+            if (input == "L") { SetLanguage(NextLanguage()); Describe(s); continue; }
+            if (input == "P" || input == "E" || HasLanguage(input.ToLowerInvariant()))   // P/E kept from v4.2
+            {
+                SetLanguage(input == "P" ? "pt" : input == "E" ? "en" : input.ToLowerInvariant());
+                Describe(s);
+                continue;
+            }
             foreach (string tok in input.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 int n;
                 if (int.TryParse(tok, out n) && n >= 1 && n <= items.Length && items[n - 1].Available)
                     items[n - 1].Wanted = !items[n - 1].Wanted;
-                else Line(Tr("  (ignored \"", "  (ignorado \"") + tok + "\")");
+                else Line("  " + T("main.ignored", tok));
             }
         }
 
         // ---- Apply ----
-        int step = 0, steps = 0;
-        foreach (Item it in items) if (it.Available && (it.Wanted || it.Installed)) steps++;
-        if (cpuState == CpuFixState.FixedByDevelopers) CleanUpAfterDeveloperFix(gameDir);
-
-        if (cpu.Available && (cpu.Wanted || cpu.Installed))
+        ApplyResult r = Apply(s, false);
+        if (r.GpuProblem)
         {
-            Header(++step, steps, cpu.Name);
-            if (cpu.Wanted && !cpu.Installed)
+            Line("");
+            if (!r.HasCpuOption) LaunchOptionPrompt(r.Launch);
+            if (r.KeepHint)
             {
-                Console.Write(Tr("  Installing ... ", "  Instalando ... "));
-                InstallCpuFix(gameDir);
-                Line(Tr("done", "pronto"));
-            }
-            else if (cpu.Wanted) Line(Tr("  Already installed.", "  Já instalada."));
-            else
-            {
-                Line(UninstallCpuFix(gameDir) ? Tr("  Removed - original files restored.", "  Removida - arquivos originais restaurados.")
-                    : Tr("  Could not restore the files. Run Steam > Verify integrity of game files.",
-                         "  Não consegui restaurar os arquivos. Use Steam > Verificar integridade dos arquivos do jogo."));
-            }
-        }
-
-        if (speed.Available && (speed.Wanted || speed.Installed))
-        {
-            Header(++step, steps, speed.Name);
-            if (speed.Wanted) InstallSpeedup(modelDir, dll);
-            else { UninstallModels(modelDir); UninstallDll(dll); }
-        }
-
-        if (voice.Available && (voice.Wanted || voice.Installed))
-        {
-            Header(++step, steps, voice.Name);
-            if (voice.Wanted) InstallVoiceFix(gameDir);
-            else { UninstallVoiceFix(gameDir); }
-        }
-
-        if (qwen.Available && (qwen.Wanted || qwen.Installed))
-        {
-            Header(++step, steps, qwen.Name);
-            if (qwen.Wanted) InstallQwenFix(gameDir);
-            else { UninstallQwenFix(gameDir); }
-        }
-
-        if (keep.Available && (keep.Wanted || keep.Installed))
-        {
-            Header(++step, steps, keep.Name);
-            if (keep.Wanted) InstallWhisperKeep(gameDir);
-            else { UninstallWhisperKeep(gameDir); }
-        }
-
-        bool gpuProblem = false, gpuNone = false;
-        if (gpu.Available && gpu.Wanted)
-        {
-            Header(++step, steps, gpu.Name + Tr(" - takes a few seconds...", " - leva alguns segundos..."));
-            ProbeResult probe = RunVulkanProbe(gameDir, simulateProbe);
-            string launch = ReadLaunchOptions();
-            bool hasCpuOption = launch != null && Regex.IsMatch(launch, @"(^|\s)-whisper-cpu(\s|$)", RegexOptions.IgnoreCase);
-            gpuProblem = probe.Outcome == ProbeOutcome.Crashed || probe.Outcome == ProbeOutcome.Hung;
-            gpuNone = probe.Outcome == ProbeOutcome.NoGpu;
-            switch (probe.Outcome)
-            {
-                case ProbeOutcome.Passed:
-                    Line(Tr("  PASSED on ", "  PASSOU na ") + probe.GpuName + Tr(". Speech can use your graphics card.", ". O reconhecimento de voz pode usar sua placa de vídeo."));
-                    if (hasCpuOption)
-                    {
-                        Line(Tr("  Note: you have -whisper-cpu in your launch options. You can try removing it for faster",
-                                "  Obs.: você tem -whisper-cpu nas opções de inicialização. Pode tentar remover para deixar"));
-                        Line(Tr("  speech. If the game then crashes when speech starts, put it back.",
-                                "  a voz mais rápida. Se o jogo travar quando a voz começar, coloque de volta."));
-                    }
-                    break;
-                case ProbeOutcome.NoGpu:
-                    Line(Tr("  No usable Vulkan graphics card found - the game will use the CPU for speech by itself. OK.",
-                            "  Nenhuma placa de vídeo Vulkan utilizável - o jogo vai usar a CPU para a voz sozinho. OK."));
-                    break;
-                case ProbeOutcome.LoadFailed:
-                    Line(Tr("  Could not load the game's speech files (", "  Não consegui carregar os arquivos de voz do jogo (") + probe.Detail + ").");
-                    Line(Tr("  Windows may be blocking them: check Windows Security > App & browser control > Smart App Control,",
-                            "  O Windows pode estar bloqueando: veja Segurança do Windows > Controle de aplicativos e do navegador > Controle Inteligente de Aplicativos,"));
-                    Line(Tr("  and your antivirus. Then run this tool again.", "  e seu antivírus. Depois rode esta ferramenta de novo."));
-                    break;
-                default:
-                    Line(Tr("  FAILED - the speech engine ", "  FALHOU - o reconhecimento de voz ")
-                         + (probe.Outcome == ProbeOutcome.Hung ? Tr("froze", "congelou") : Tr("crashed", "travou"))
-                         + Tr(" during the graphics card test", " durante o teste da placa de vídeo")
-                         + (probe.Detail != "" ? " (" + probe.Detail + ")" : "") + ".");
-                    Line(Tr("  Without the fix below, the game will probably crash when speech starts.",
-                            "  Sem a correção abaixo, o jogo provavelmente vai travar quando a voz começar."));
-                    break;
-            }
-            if (gpuProblem)
-            {
-                Line("");
-                if (hasCpuOption) Line(Tr("  You already have the launch option -whisper-cpu set. Good - that prevents this crash.",
-                                          "  Você já tem a opção de inicialização -whisper-cpu. Ótimo - isso evita esse travamento."));
-                else LaunchOptionPrompt(launch);
-                if (!keep.Wanted && keep.Available && strongCpu)
-                {
-                    Line(Tr("  With -whisper-cpu, English speech switches to the less accurate Moonshine model. Run this tool",
-                            "  Com -whisper-cpu, a voz em inglês muda para o modelo Moonshine, menos preciso. Rode esta ferramenta"));
-                    Line(Tr("  again afterwards and tick \"Better English speech recognition\" if you play in English.",
-                            "  de novo depois e marque \"Melhor reconhecimento de voz em inglês\" se você joga em inglês."));
-                }
+                Wrapped("  ", T("main.with_whisper_cpu_english_speech"));
             }
         }
 
         Line("");
-        Line(Tr("Tips", "Dicas"));
-        bool lowEnd = !hasAvx2 || gpuProblem || gpuNone || Environment.ProcessorCount <= 4;
-        int watermark = ReadWatermarkSetting();
-        if (lowEnd && hasAvx)
-        {
-            Line(Tr("  Your PC is on the slower side for this game, so:", "  Seu PC é mais fraco para este jogo, então:"));
-            if (watermark == 0) Line(Tr("  - BanditCam watermark: already OFF. Good.", "  - Marca d'água do BanditCam: já está DESLIGADA. Ótimo."));
-            else
-            {
-                Line(Tr("  - Turn OFF the BanditCam WATERMARK: open the BanditCam app on the in-game computer and",
-                        "  - DESLIGUE a MARCA D'ÁGUA do BanditCam: abra o app BanditCam no computador dentro do jogo e"));
-                Line(Tr("    click the watermark toggle. After every call the game re-encodes the recording to add the",
-                        "    clique na opção da marca d'água. Depois de cada ligação o jogo recodifica a gravação para"));
-                Line(Tr("    watermark, and that slows down speech recognition right when the next call starts.",
-                        "    colocar a marca d'água, e isso deixa a voz lenta justo quando a próxima ligação começa."));
-            }
-            Line(Tr("  - Turn on VSync or cap your FPS (the game runs uncapped by default).",
-                    "  - Ligue o VSync ou limite o FPS (o jogo roda sem limite por padrão)."));
-            Line(Tr("  - Speak after the caller has finished, then give it a few seconds.",
-                    "  - Fale depois que a pessoa na ligação terminar, e espere alguns segundos."));
-        }
-        else if (hasAvx) Line(Tr("  Speak after the caller has finished talking.", "  Fale depois que a pessoa na ligação terminar de falar."));
-        else Line(Tr("  Your CPU can't run the game's speech recognition, but you can type to the callers.",
-                     "  Sua CPU não roda o reconhecimento de voz do jogo, mas você pode digitar para quem liga."));
+        Line(T("main.tips"));
+        string intro;
+        List<string> tips = Tips(s, r, out intro);
+        if (intro != null) { Line("  " + intro); foreach (string t in tips) Wrapped("  - ", "    ", t); }
+        else foreach (string t in tips) Wrapped("  ", t);
 
         Line("");
-        Line(Tr("ALL DONE.", "PRONTO."));
-        Line(Tr("Run this tool again any time to change what is installed, or type U to undo everything.",
-                "Rode esta ferramenta de novo quando quiser para mudar o que está instalado, ou digite U para desfazer tudo."));
-        Line(Tr("A game update or 'Verify integrity of game files' may undo the fixes - just run this again.",
-                "Uma atualização do jogo ou 'Verificar integridade dos arquivos' pode desfazer as correções - é só rodar de novo."));
+        Line(T("main.all_done"));
+        Line(T("main.run_this_tool_again_any"));
+        Line(T("main.game_update_or_verify_integrity"));
         return 0;
     }
 
@@ -431,20 +252,18 @@ static partial class Fixer
             found++;
             if (ReadFtype(p) == FtypeF16) todo.Add(p);
         }
-        if (found == 0) Line(Tr("  Speech model files not found - skipped. (Steam > Verify integrity of game files.)",
-                                "  Arquivos do modelo de voz não encontrados - pulado. (Steam > Verificar integridade dos arquivos do jogo.)"));
-        else if (todo.Count == 0) Line(Tr("  Faster speech model: already installed.", "  Modelo de voz mais rápido: já instalado."));
+        if (found == 0) Line(("  " + T("main.speech_model_files_not_found")));
+        else if (todo.Count == 0) Line(("  " + T("main.faster_speech_model_already_installed")));
         else
         {
             long need = 0;
             foreach (string p in todo) need += new FileInfo(p).Length / 2 + (20L << 20);
             bool space = true;
             try { space = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(modelDir))).AvailableFreeSpace >= need; } catch { }
-            if (!space) Line(Tr("  Not enough free disk space for the faster model (need about ", "  Sem espaço livre suficiente para o modelo mais rápido (precisa de uns ")
-                             + (need >> 20) + " MB)" + Tr(" - skipped.", " - pulado."));
+            if (!space) Line("  " + T("main.not_enough_free_disk_space", (need >> 20)));
             else foreach (string p in todo)
             {
-                Console.Write(Tr("  Converting ", "  Convertendo ") + Path.GetFileName(p) + Tr(" to the faster format ... ", " para o formato mais rápido ... "));
+                Out("  " + (T("main.converting_to_faster_format", Path.GetFileName(p)) + " "));
                 var sw = Stopwatch.StartNew();
                 string tmp = p + TempSuffix;
                 try { Quantize(p, tmp); Validate(tmp); }
@@ -453,14 +272,13 @@ static partial class Fixer
                 if (File.Exists(bak)) File.Delete(bak);
                 File.Move(p, bak);
                 File.Move(tmp, p);
-                Line(Tr("done (", "pronto (") + sw.Elapsed.TotalSeconds.ToString("0.0") + " s)");
+                Line(T("main.done_s", sw.Elapsed.TotalSeconds.ToString("0.0")));
             }
         }
         string h = File.Exists(dll) ? Sha256(dll) : null;
-        if (h == DllOriginal) { Console.Write(Tr("  Shorter listening window ... ", "  Janela de escuta menor ... ")); PatchDll(dll); Line(Tr("done", "pronto")); }
-        else if (h == DllPatched) Line(Tr("  Shorter listening window: already installed.", "  Janela de escuta menor: já instalada."));
-        else Line(Tr("  Shorter listening window: SKIPPED (your game version has a different com.whisper.unity.dll).",
-                     "  Janela de escuta menor: PULADA (sua versão do jogo tem outro com.whisper.unity.dll)."));
+        if (h == DllOriginal) { Out("  " + (T("main.shorter_listening_window") + " ")); PatchDll(dll); Line(T("main.done")); }
+        else if (h == DllPatched) Line(("  " + T("main.shorter_listening_window_already_installed")));
+        else Line(("  " + T("main.shorter_listening_window_skipped_your")));
     }
 
     static bool ModelsConverted(string modelDir)
@@ -477,7 +295,7 @@ static partial class Fixer
     {
         Line("");
         bool ok = true;
-        if (!UninstallCpuFix(gameDir)) { ok = false; Line(Tr("Could not restore the old CPU fix files.", "Não consegui restaurar os arquivos da correção para CPU antiga.")); }
+        if (!UninstallCpuFix(gameDir)) { ok = false; Line(T("main.could_not_restore_old_cpu")); }
         if (UninstallModels(modelDir) != 0) ok = false;
         if (UninstallDll(dll) != 0) ok = false;
         if (UninstallVoiceFix(gameDir) != 0) ok = false;
@@ -486,32 +304,26 @@ static partial class Fixer
         Line("");
         if (ok)
         {
-            Line(Tr("UNDONE - original game files restored.", "DESFEITO - arquivos originais do jogo restaurados."));
-            Line(Tr("If you added -whisper-cpu to the launch options and want it gone, remove it in Steam yourself.",
-                    "Se você colocou -whisper-cpu nas opções de inicialização e quer tirar, remova na Steam você mesmo."));
+            Line(T("main.undone_original_game_files_restored"));
+            Line(T("main.if_you_added_whisper_cpu"));
         }
-        else Line(Tr("Some files could not be restored. Run Steam > Properties > Installed Files > Verify integrity of game files.",
-                     "Alguns arquivos não puderam ser restaurados. Use Steam > Propriedades > Arquivos instalados > Verificar integridade dos arquivos do jogo."));
+        else Line(T("main.some_files_could_not_be"));
         return ok ? 0 : 1;
     }
 
     static void LaunchOptionPrompt(string current)
     {
         Line("  ##############################################################");
-        Line(Tr("  #  ACTION NEEDED: add a Steam launch option                   #",
-                "  #  AÇÃO NECESSÁRIA: adicione uma opção de inicialização       #"));
+        Line(("  " + T("main.action_needed_add_steam_launch")));
         Line("  ##############################################################");
-        Line(Tr("  1. Open Steam > Library.", "  1. Abra a Steam > Biblioteca."));
-        Line(Tr("  2. Right-click 'Scam With Your Friends' > Properties.", "  2. Clique com o botão direito em 'Scam With Your Friends' > Propriedades."));
-        Line(Tr("  3. On the General tab, find 'Launch Options' and type:   -whisper-cpu",
-                "  3. Na aba Geral, em 'Opções de inicialização', digite:   -whisper-cpu"));
+        Line(("  " + T("main.1_open_steam_library")));
+        Line(("  " + T("main.2_right_click_scam_with")));
+        Line(("  " + T("main.3_on_general_tab_find")));
         if (!string.IsNullOrEmpty(current))
-            Line(Tr("     (You already have \"" + current + "\" there - keep it and add -whisper-cpu after a space.)",
-                    "     (Você já tem \"" + current + "\" lá - mantenha e adicione -whisper-cpu depois de um espaço.)"));
-        Line(Tr("  4. Close the Properties window.", "  4. Feche a janela de Propriedades."));
-        Line(Tr("  This makes speech use the processor instead of the graphics card, so the game won't crash.",
-                "  Isso faz a voz usar o processador em vez da placa de vídeo, então o jogo não vai travar."));
-        Console.Write(Tr("  Press Enter when you have done this... ", "  Aperte Enter quando terminar... "));
+            Line("     " + T("main.you_already_have_there_keep", current));
+        Line(("  " + T("main.4_close_properties_window")));
+        Line(("  " + T("main.this_makes_speech_use_processor")));
+        Out("  " + (T("main.press_enter_when_you_have") + " "));
         Console.ReadLine();
     }
 
@@ -608,7 +420,7 @@ static partial class Fixer
         avx2 = IsProcessorFeaturePresent(40);  // PF_AVX2_INSTRUCTIONS_AVAILABLE
     }
 
-    static string YesNo(bool b) { return b ? Tr("yes", "sim") : Tr("NO", "NÃO"); }
+    static string YesNo(bool b) { return b ? T("main.yes") : T("main.no"); }
 
     static string FindGameDir()
     {
@@ -663,5 +475,4 @@ static partial class Fixer
         return libs;
     }
 
-    static void Line(string s) { Console.WriteLine(s); }
 }

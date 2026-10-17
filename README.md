@@ -13,25 +13,42 @@ Every release file is built automatically by GitHub from the code in this reposi
 ## How to use
 
 1. Close the game completely.
-2. Run `SWYF-Speech-Fixer.exe`. It finds the game automatically, or asks for the folder.
+2. Double-click `SWYF-Speech-Fixer.exe`. A window opens and finds the game by itself (or lets you pick the game folder).
    Windows may warn about an unknown program: **More info → Run anyway**.
-3. A menu shows each fix and whether your PC needs it. The recommended ones are already ticked:
-   type a number to tick/untick a fix, then press **Enter**. Unticking a fix that's installed removes it.
-4. Read what it says. If you see **ACTION NEEDED**, follow the steps (adding a Steam launch option).
+3. The window lists every fix with a label: **Recommended**, **Installed**, **Optional** or **Not needed**.
+   The recommended ones are already ticked. Click a fix to tick or untick it. Unticking an installed fix removes it.
+4. Press **Apply**. When it's done, the window tells you if there's **one more step** (adding the Steam launch option
+   `-whisper-cpu`, with a **Copy** button) and gives tips for your PC.
 
-To **undo everything**, run it again and type `U` in the menu.
-The tool is in **English** and **Brazilian Portuguese**. It switches to Portuguese automatically on a Portuguese Windows or when the game is set to Português; press `P` / `E` in the menu to switch.
+To **undo everything**, open it again and press **Undo everything**.
+Fixes marked **UNTESTED** haven't been confirmed in the game yet: if one causes trouble, untick it and tell Tiger (Discord: `tigerlundberg`).
 A game update or Steam's *Verify integrity of game files* also restores the original files. Just run the tool again afterwards.
+
+**Text mode:** `SWYF-Speech-Fixer.exe --console` gives the old text menu (type numbers, Enter to apply, `U` to undo, `L` to switch language).
+`--uninstall` undoes everything without asking.
 
 ## Em português
 
 1. Feche o jogo completamente.
-2. Rode o `SWYF-Speech-Fixer.exe` (baixe na página [**Releases**](../../releases)). Se o Windows avisar sobre um programa desconhecido: **Mais informações → Executar assim mesmo**.
-3. Um menu mostra cada correção. As recomendadas já vêm marcadas: digite um número para marcar/desmarcar e aperte **Enter**.
-4. Para **desfazer tudo**, rode de novo e digite `U`.
+2. Abra o `SWYF-Speech-Fixer.exe` com dois cliques (baixe na página [**Releases**](../../releases)). Se o Windows avisar sobre um programa desconhecido: **Mais informações → Executar assim mesmo**.
+3. A janela mostra cada correção. As recomendadas já vêm marcadas: clique para marcar/desmarcar e aperte **Aplicar**.
+4. Para **desfazer tudo**, abra de novo e aperte **Desfazer tudo**.
 
 Corrige, entre outras coisas, as vozes em português sendo cortadas depois de uma fração de segundo (versão 0.1.74 do jogo).
 Ferramenta **não oficial**, não feita pelos desenvolvedores do jogo.
+
+## Languages
+
+The tool picks its language by itself: the game's call language first, then your Windows language, otherwise English.
+Change it with the language button in the top-right corner of the window.
+
+Available now: **English** and **Português (Brasil)**. Translations are made with AI and checked by players when possible,
+so a line may sound a bit off. Tell Tiger (Discord: `tigerlundberg`) or open an issue.
+
+**Add or fix a translation:** every text is in [`lang/`](lang), one plain text file per language (`en.txt`, `pt.txt`, ...).
+Each line is `key = text`. To add a language, copy `en.txt` to `<code>.txt` (two-letter code, e.g. `fr.txt`), change `_name`
+to the language's own name, and translate the text after each `=`. Keep `{0}`, `{1}` and `\n` as they are; they are filled in by
+the program. Lines you leave out show in English. `build.cmd` includes every file in `lang/` automatically.
 
 ## What it does
 
@@ -68,7 +85,7 @@ It downloads nothing and sends nothing anywhere. Exact byte-level details are in
 
 You shouldn't have to take our word for it, so here is how to check:
 
-- **Read the code.** It's about 1,000 lines of plain C# in [`src/`](src). No obfuscation, no network code.
+- **Read the code.** It's plain C# in [`src/`](src) (about 2,500 lines including the window). No obfuscation, no network code.
 - **Built by GitHub, not on someone's PC.** The [Actions](../../actions) tab shows every build: the exact commands, and the SHA-256 of the .exe it produced. Releases are attached automatically by that build.
 - **Check your download.** In Command Prompt: `certutil -hashfile SWYF-Speech-Fixer.exe SHA256` and compare with `SHA256SUMS.txt` on the release.
 - **Scan it yourself** with your antivirus or [VirusTotal](https://www.virustotal.com) if you like.
@@ -88,10 +105,12 @@ Some machine-learning engines (generic names like `Malicious (score: 100)`, `sus
 
 ## For developers
 
-- `build.cmd`: builds `dist\SWYF-Speech-Fixer.exe`.
+- `build.cmd`: builds `dist\SWYF-Speech-Fixer.exe` (a window app; `src\*.cs` plus every `lang\*.txt` embedded as a resource).
+- `src/Core.cs` has the shared logic (what's installed, applying, tips), `src/Gui.cs` the window, `src/Fixer.cs` the text mode,
+  `src/Lang.cs` the translation lookup (`T("key")`, falls back to English per line).
 - `SWYF-Speech-Fixer.exe --convert in.bin out.bin`: runs only the model conversion (used by the CI check).
 - `tools/genmodel.py`: generates full-size Whisper test models with random weights for that check.
-- Test-only options (`--assume-cpu`, `--simulate-probe`, Linux support for the GPU test) only exist when compiled with `/define:SWYF_TEST`. Release builds don't contain them.
+- Test-only options (`--assume-cpu`, `--assume-gpu`, `--assume-threads`, `--simulate-probe`, `--test-*` for driving the window, Linux support for the GPU test) only exist when compiled with `/define:SWYF_TEST`. Release builds don't contain them.
 
 ## License
 

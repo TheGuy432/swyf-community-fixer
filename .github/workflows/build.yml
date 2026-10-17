@@ -82,7 +82,9 @@ jobs:
           foreach ($m in @("base.en", "base")) {
             python tools/genmodel.py "whisper.cpp/models/for-tests-ggml-$m.bin" "test-$m.bin" 1
             & $quantize "test-$m.bin" "official-$m.bin" q8_0 | Out-Null
-            & dist\SWYF-Speech-Fixer.exe --convert "test-$m.bin" "ours-$m.bin"
+            # the .exe is a window app, so wait for it explicitly
+            $p = Start-Process -FilePath dist\SWYF-Speech-Fixer.exe -ArgumentList "--convert","test-$m.bin","ours-$m.bin" -Wait -PassThru -NoNewWindow
+            if ($p.ExitCode -ne 0) { throw "Conversion of $m failed (exit $($p.ExitCode))" }
             $a = (Get-FileHash "official-$m.bin").Hash
             $b = (Get-FileHash "ours-$m.bin").Hash
             "$m  official=$a  ours=$b"

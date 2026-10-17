@@ -94,7 +94,7 @@ static partial class Fixer
         if (File.Exists(ggml) && Sha256(ggml) == AvxBuild && File.Exists(gb) && Sha256(gb) != AvxBuild)
         {
             File.Copy(gb, ggml, true);
-            Line(Tr("  Removed the old CPU fix's replacement file - the game now has its own fix.", "  Removi o arquivo da correção antiga para CPU - o jogo agora tem a própria correção."));
+            Line(("  " + T("cpu.removed_old_cpu_fix_s")));
         }
         if (!File.Exists(scripts) || Sha256(scripts) != ScriptsPatched) TryDelete(scripts + CpuBackupSuffix);
         if (!File.Exists(ggml) || Sha256(ggml) != AvxBuild) TryDelete(gb);
@@ -118,7 +118,7 @@ static partial class Fixer
             string target = w + ".disabled-by-oldcpufix";
             if (File.Exists(target)) File.Delete(target);
             File.Move(w, target);
-            Line(Tr("  Disabled the old BepInEx loader from the first fix version (it caused a crash).", "  Desativei o carregador BepInEx da primeira versão da correção (ele causava travamento)."));
+            Line(("  " + T("cpu.disabled_old_bepinex_loader_from")));
         }
     }
 
