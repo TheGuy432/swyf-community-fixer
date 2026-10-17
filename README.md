@@ -85,7 +85,7 @@ It downloads nothing and sends nothing anywhere. Exact byte-level details are in
 
 You shouldn't have to take our word for it, so here is how to check:
 
-- **Read the code.** It's plain C# in [`src/`](src) (about 2,500 lines including the window). No obfuscation, no network code.
+- **Read the code.** It's plain C# in [`src/`](src) (about 3,000 lines including the window). No obfuscation, no network code.
 - **Built by GitHub, not on someone's PC.** The [Actions](../../actions) tab shows every build: the exact commands, and the SHA-256 of the .exe it produced. Releases are attached automatically by that build.
 - **Check your download.** In Command Prompt: `certutil -hashfile SWYF-Speech-Fixer.exe SHA256` and compare with `SHA256SUMS.txt` on the release.
 - **Scan it yourself** with your antivirus or [VirusTotal](https://www.virustotal.com) if you like.
