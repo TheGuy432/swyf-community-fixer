@@ -202,7 +202,7 @@ voice.skipped_your_game_version_has = PULADA (sua versão do jogo tem outro Pock
 voice.fixing_portuguese_callers_being_cut = Corrigindo as vozes em português cortadas depois de uma fração de segundo ...
 voice.could_not_restore_pockettts_dll = Não consegui restaurar o PocketTTS.dll (backup não encontrado). Use Steam > Verificar integridade dos arquivos do jogo.
 voice.could_not_restore_pockettts_dll_2 = Não consegui restaurar o PocketTTS.dll. Use Steam > Verificar integridade dos arquivos do jogo.
-voice.caller_voice_fix_removed_original = Correção das vozes removida - PocketTTS.dll original restaurado.
+voice.caller_voice_fix_removed_original = Correção das vozes removida - arquivos originais do jogo restaurados.
 
 # ---- Qwen3 on 8 GB cards ----
 qwen.skipped_your_game_version_has = PULADA (sua versão do jogo tem outro Assembly-CSharp.dll).
@@ -219,3 +219,21 @@ keep.keeping_whisper_speech_model_for = Mantendo o modelo de voz Whisper para in
 keep.could_not_restore_scriptsassdef_dll = Não consegui restaurar o ScriptsAssDef.dll (backup não encontrado). Use Steam > Verificar integridade dos arquivos do jogo.
 keep.could_not_restore_scriptsassdef_dll_2 = Não consegui restaurar o ScriptsAssDef.dll. Use Steam > Verificar integridade dos arquivos do jogo.
 keep.english_speech_model_patch_removed = Patch do modelo de voz em inglês removido - ScriptsAssDef.dll original restaurado.
+
+# v4.4 caller voice fix
+voice.desc_pt = impede que as vozes em português sejam cortadas depois de uma fração de segundo ou no meio da frase, e corrige números de cartão lentos e frases de espera que se arrastam
+voice.desc_fr = impede que as vozes em francês parem no meio da frase, e corrige números de cartão lentos e frases de espera que se arrastam
+voice.desc_de = impede que as vozes em alemão parem no meio da frase, e corrige números de cartão lentos e frases de espera que se arrastam
+voice.desc_it = impede que as vozes em italiano parem no meio da frase, e corrige números de cartão lentos e frases de espera que se arrastam
+voice.desc_ko = corrige as vozes em coreano que pulam metade de cada frase, e números de cartão lentos
+voice.desc_hi = corrige as vozes em hindi que pronunciam palavras errado (sinais de vogal faltando), e números de cartão lentos
+voice.desc_moss = corrige números de cartão lidos muito devagar e frases de espera ("Hum, certo...") que se arrastam
+voice.desc_general = impede que as vozes sejam cortadas no meio da frase (português, francês, alemão, italiano, coreano, hindi) e corrige números de cartão lentos e frases de espera que se arrastam
+voice.status_not_installed = não instalada -
+voice.status_update = versão antiga instalada - marque para atualizar:
+voice.lines_already = Falas das ligações: já corrigidas.
+voice.fixing_lines = Corrigindo vozes cortadas e o texto em coreano/hindi ...
+voice.cards_skipped = Números de cartão e frases de espera: PULADO (sua versão do jogo tem outro Assembly-CSharp.dll).
+voice.cards_already = Números de cartão e frases de espera: já corrigidos.
+voice.fixing_cards = Corrigindo números de cartão lentos e frases de espera que se arrastam ...
+voice.report_note = Ainda não testado no jogo. Se as vozes soarem erradas, desmarque isto e avise o Tiger (Discord: tigerlundberg).

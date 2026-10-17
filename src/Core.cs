@@ -55,6 +55,8 @@ static partial class Fixer
         public int Threads;
         public CpuFixState CpuState;
         public string PocketHash, AsmHash, SadHash;
+        public PocketState Pocket;
+        public AsmState Asm;
         public Item Cpu, Speed, Voice, Qwen, Keep, Gpu;
         public Item[] Items;   // console menu order
     }
@@ -91,12 +93,14 @@ static partial class Fixer
         }
         s.PocketHash = File.Exists(PocketPath(gameDir)) ? Sha256(PocketPath(gameDir)) : null;
         s.AsmHash = File.Exists(GameAsmPath(gameDir)) ? Sha256(GameAsmPath(gameDir)) : null;
+        s.Pocket = ReadPocketState(gameDir);
+        s.Asm = ReadAsmState(gameDir);
         s.SadHash = File.Exists(SadPath(gameDir)) ? Sha256(SadPath(gameDir)) : null;
         s.Launch = ReadLaunchOptions();
         s.CpuSpeech = GameUsesCpuSpeech(s.Launch);
         s.StrongCpu = s.HasAvx2 && s.Threads >= 8;
         s.CallLanguage = ReadPrefString("Kolkata.CallLanguage");
-        if (s.AsmHash == AsmOriginal || s.AsmHash == AsmPatched || s.SadHash == SadOriginal || s.SadHash == SadPatched) s.GameBuild = "0.1.74";
+        if (s.Asm.Known || s.SadHash == SadOriginal || s.SadHash == SadPatched) s.GameBuild = "0.1.74";
         else
         {
             string sh = File.Exists(ScriptsPath(gameDir)) ? Sha256(ScriptsPath(gameDir)) : null;
@@ -105,7 +109,7 @@ static partial class Fixer
 
         s.Cpu = new Item { Key = "cpu" };
         s.Speed = new Item { Key = "speed" };
-        s.Voice = new Item { Key = "voice" };
+        s.Voice = new Item { Key = "voice", Untested = true };
         s.Qwen = new Item { Key = "qwen", Experimental = true, Untested = true };
         s.Keep = new Item { Key = "keep", Untested = true };
         s.Gpu = new Item { Key = "gpu", IsTest = true };
@@ -117,7 +121,7 @@ static partial class Fixer
         s.Keep.Wanted = s.Keep.Installed || (s.Keep.Available && s.CpuSpeech && s.StrongCpu);
         s.Cpu.Recommended = s.Cpu.Available && !s.Cpu.Installed;
         s.Speed.Recommended = s.Speed.Available && s.SpeedTodo;
-        s.Voice.Recommended = s.Voice.Available && !s.Voice.Installed;
+        s.Voice.Recommended = s.Voice.Available && (!s.Voice.Installed || s.Voice.Partial);
         s.Keep.Recommended = s.Keep.Available && !s.Keep.Installed && s.CpuSpeech && s.StrongCpu;
         return s;
     }
@@ -126,7 +130,20 @@ static partial class Fixer
     // Hook for later: per-language descriptions once more languages are fixed. For now always the generic text.
     static string VoiceFixDescription(string callLanguage)
     {
-        return T("core.not_installed_stops_portuguese_callers");
+        string c = (callLanguage ?? "").Length >= 2 ? callLanguage.Substring(0, 2).ToLowerInvariant() : "";
+        switch (c)
+        {
+            case "pt": return T("voice.desc_pt");
+            case "fr": return T("voice.desc_fr");
+            case "de": return T("voice.desc_de");
+            case "it": return T("voice.desc_it");
+            case "ko": return T("voice.desc_ko");
+            case "hi": return T("voice.desc_hi");
+            case "zh": case "ja": case "ru": case "pl": case "tr": case "hu":
+            case "sv": case "da": case "el": case "ar": case "fa":
+                return T("voice.desc_moss");
+            default: return T("voice.desc_general");
+        }
     }
 
     // Names and status texts (language dependent; call again after switching language).
@@ -158,15 +175,21 @@ static partial class Fixer
             : T("core.not_available_for_this_game");
 
         voice.Name = T("core.caller_voice_fix");
-        voice.Installed = s.PocketHash == PocketPatched;
-        voice.Available = s.PocketHash == PocketPatched || s.PocketHash == PocketOriginal;
-        voice.Status = voice.Installed ? T("core.installed")
-            : voice.Available ? VoiceFixDescription(s.CallLanguage)
+        bool pocketKnown = s.Pocket != PocketState.Unknown;
+        bool anyVoice = s.Pocket == PocketState.Fixed || s.Pocket == PocketState.OldFix || (s.Asm.Known && (s.Asm.Card || s.Asm.Fillers));
+        bool fullVoice = (pocketKnown || s.Asm.Known) && (!pocketKnown || s.Pocket == PocketState.Fixed)
+                         && (!s.Asm.Known || (s.Asm.Card && s.Asm.Fillers));
+        voice.Available = pocketKnown || s.Asm.Known;
+        voice.Installed = anyVoice;                    // unticking removes whatever is there
+        voice.Partial = anyVoice && !fullVoice;        // an older or partial version: ticked = update
+        voice.Status = fullVoice ? T("core.installed")
+            : anyVoice ? T("voice.status_update") + " " + VoiceFixDescription(s.CallLanguage)
+            : voice.Available ? T("voice.status_not_installed") + " " + VoiceFixDescription(s.CallLanguage)
             : T("core.not_available_for_this_game_2");
 
         qwen.Name = T("core.qwen3_tts_on_8_gb");
-        qwen.Installed = s.AsmHash == AsmPatched;
-        qwen.Available = s.AsmHash == AsmPatched || s.AsmHash == AsmOriginal;
+        qwen.Installed = s.Asm.Known && s.Asm.Qwen;
+        qwen.Available = s.Asm.Known;
         qwen.Status = qwen.Installed ? T("core.installed_untick_to_remove_if")
             : qwen.Available ? T("core.off_unlocks_qwen3_voices_on")
             : T("core.not_available_for_this_game");

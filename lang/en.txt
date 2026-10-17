@@ -201,7 +201,7 @@ voice.skipped_your_game_version_has = SKIPPED (your game version has a different
 voice.fixing_portuguese_callers_being_cut = Fixing Portuguese callers being cut off after a split second ...
 voice.could_not_restore_pockettts_dll = Could not restore PocketTTS.dll (backup missing). Run Steam > Verify integrity of game files.
 voice.could_not_restore_pockettts_dll_2 = Could not restore PocketTTS.dll. Run Steam > Verify integrity of game files.
-voice.caller_voice_fix_removed_original = Caller voice fix removed - original PocketTTS.dll restored.
+voice.caller_voice_fix_removed_original = Caller voice fix removed - original game files restored.
 
 # ---- Qwen3 on 8 GB cards ----
 qwen.skipped_your_game_version_has = SKIPPED (your game version has a different Assembly-CSharp.dll).
@@ -218,3 +218,21 @@ keep.keeping_whisper_speech_model_for = Keeping the Whisper speech model for Eng
 keep.could_not_restore_scriptsassdef_dll = Could not restore ScriptsAssDef.dll (backup missing). Run Steam > Verify integrity of game files.
 keep.could_not_restore_scriptsassdef_dll_2 = Could not restore ScriptsAssDef.dll. Run Steam > Verify integrity of game files.
 keep.english_speech_model_patch_removed = English speech model patch removed - original ScriptsAssDef.dll restored.
+
+# v4.4 caller voice fix
+voice.desc_pt = stops Portuguese callers being cut off after a split second or mid-sentence, and fixes slow card numbers and rambling filler lines
+voice.desc_fr = stops French callers stopping mid-sentence, and fixes slow card numbers and rambling filler lines
+voice.desc_de = stops German callers stopping mid-sentence, and fixes slow card numbers and rambling filler lines
+voice.desc_it = stops Italian callers stopping mid-sentence, and fixes slow card numbers and rambling filler lines
+voice.desc_ko = fixes Korean callers skipping about half of every sentence, and slow card numbers
+voice.desc_hi = fixes Hindi callers mispronouncing words (missing vowel signs), and slow card numbers
+voice.desc_moss = fixes card numbers that are read very slowly and filler lines ("Um, okay...") that ramble on
+voice.desc_general = stops callers being cut off mid-sentence (Portuguese, French, German, Italian, Korean, Hindi) and fixes slow card numbers and rambling filler lines
+voice.status_not_installed = not installed -
+voice.status_update = older version installed - tick to update:
+voice.lines_already = Caller lines: already fixed.
+voice.fixing_lines = Fixing callers being cut off, and Korean/Hindi text ...
+voice.cards_skipped = Card numbers and filler lines: SKIPPED (your game version has a different Assembly-CSharp.dll).
+voice.cards_already = Card numbers and filler lines: already fixed.
+voice.fixing_cards = Fixing slow card numbers and rambling filler lines ...
+voice.report_note = Not tested in the game yet. If callers sound wrong, untick this and report it to Tiger (Discord: tigerlundberg).

@@ -55,31 +55,39 @@ param.audio_ctx = ctx;
 - Measured: encoder for a 1.1 s clip went from 8.8 s to 1.4–1.6 s on an AVX-only build.
   In-game on an i5-2500, a 2.1 s phrase was transcribed in 4.1 s, against about 15 s before.
 
-## 3. Caller voice fix (`PocketTTS.dll`), game builds 0.1.71–0.1.74
+## 3. Caller voice fix (`PocketTTS.dll` + `Assembly-CSharp.dll`), game build 0.1.74
 
-**Problem.** In 0.1.74 every Portuguese caller line is cut off after about 0.3 s (players hear "DAL-" from "DALE!").
-The game logs `provider=Pocket language=pt stage=generation_done ... queuedAudioMs=290` for almost every line, whatever its length.
-The Pocket TTS loop in `PocketTTS.PocketTTSModel.RunPrompt` generates one 80 ms frame per step and stops 3 frames after the
-first frame whose `eos_logit` is above -4. The Portuguese model's `eos_logit` is above -4 for its first 3–5 frames
-(e.g. -2.5, -3.1, -3.7, -4.9, ...) and only rises again at the real end of the sentence, so generation stops after 4 frames.
-English never does this: its first frames are around -7 to -10.
+Tested outside the game on all 12 Pocket TTS languages and all 11 MOSS TTS languages (re-implementations of the game's
+own pipelines, see the v4.4 notes); not yet confirmed in the game.
 
-**Fix.** In `PocketTTS.dll` (SHA-256 `b47b39cd9be3417efd2c1c0e61a124f762685b4caf116e20e08165b706bf11bf`, identical in 0.1.71 and 0.1.74),
-in `RunPrompt`, whose IL code starts at file offset `0x3280`:
-- IL `0x06C6`–`0x06D7` (file `0x3946`, 18 bytes): `if (num13 < 0 && num15 > -4f) num13 = num14;` → 18 × `nop`.
-- IL `0x0793`–`0x07C8` (file `0x3A13`, 54 bytes), directly before the loop's break check, previously
-  `if (EnableProfiling) frameBirthTimes[num14] = lifeStopwatch.ElapsedMilliseconds;` (only feeds the `[TTS RT]` debug log),
-  now holds the same check with one extra condition, padded with `nop`:
+All changes below are *regions*: the tool only accepts a file if every region holds either the game's original bytes or
+our patched bytes, and putting all regions back gives exactly the original file (SHA-256). That's how fixes in the same
+file can be switched on and off independently, and why no backup files are needed any more.
 
-```csharp
-if (num13 < 0 && num14 >= 8 && num15 > -4f) num13 = num14;   // ignore "end of speech" in the first 8 frames (~0.64 s)
-```
+**3a. End-of-line rule** (`PocketTTS.dll`, SHA-256 `b47b39cd9be3417efd2c1c0e61a124f762685b4caf116e20e08165b706bf11bf`, same in
+0.1.71 and 0.1.74; `PocketTTSModel.RunPrompt`, IL code at file offset `0x3280`). The game stops 3 frames after the first frame
+whose end-of-speech score is above -4. Portuguese crosses -4 in its first frames (every line ~0.3 s), and French, German,
+Italian and Korean cross it briefly mid-sentence. New rule: from frame 8, stop when the score is above 0, or above -3 for 10
+frames in a row. Across 10 languages it got 118 of 120 test lines right (game: 97), at ~0.4 s extra silence per line.
+- IL `0x06C6` (18 bytes, the old check) → `nop`s.
+- IL `0x0793` (54 bytes, the optional profiling block that only fed a debug log) →
+  `V_55 = (num14 != 0 && eos > -3f) ? V_55 + 1 : 0; if (num13 < 0 && num14 >= 8 && (eos > 0f || V_55 >= 10)) num13 = num14;`
+  (`V_55` is only used after the frame loop). v4.2's simpler rule (ignore frames 0–7) is recognised and upgraded.
 
-- Result SHA-256 `6cf88903554073d028f07fca9a8a8fd8274fa46f32b37e4518e226b6754bd109`.
-- Tested by running the game's Portuguese and English voice models outside the game with the same logic:
-  Portuguese lines go from 0.32 s to their full length (2.6–4.5 s) and still end on their own; the shortest real
-  sentence end seen was frame 13 (Portuguese) / 9 (English). English sentences are unchanged.
-  One-word lines ("Yes.", "Sim.") get up to ~0.5 s of near-silence added at the end.
+**3b. Text preparation** (`TextProcessor.PrepareText`, IL code at file `0x844`). `Normalize(FormD)` followed by dropping every
+non-spacing mark broke Korean (Hangul → Jamo the tokenizer doesn't know, ~half of each line `<unk>`) and Hindi (vowel signs,
+virama, nasal marks deleted). File `0x8AA`: `ldc.i4.2` → `ldc.i4.1` (FormC); file `0x8CF`: `ldc.i4.5` → `ldc.i4.m1` (drop no
+mark). Latin accents are still mapped by the game's own table first, so other languages get the same text as before.
+Result: `PocketTTS.dll` SHA-256 `894ff1195b093819239821d45e90c0320b6e4fd09ab70b8a5cc6e9d2d58b715b`.
+
+**3c. Card numbers** (`Assembly-CSharp.dll`, SHA-256 `99791cf93ec829d4784ee514ab78eba19e5e4a7ea841b291d979432a5c911d8f`;
+`SentinelValueFactory.BuildGroupsSpoken`). A `[50ms]` pause tag after each `-` makes the voice engine generate every 4-digit
+group separately; with MOSS 16 of 24 test readouts ran away (up to 63 s). File `0x40AFF`: `ldc.i4.s 45` → `ldc.i4.s 0`, so no
+pause tags are added (3 of 24).
+
+**3d. Filler lines** (`CallerResponseFillers.Get`, 66 string literals). "Um, okay..." / "嗯，好的……": MOSS often keeps going
+for 5–30 s after an ellipsis. The ellipsis becomes `.  ` / `。 ` (same length; the trailing spaces are ignored). Over 30 runs:
+13 runaways with "...", 5 with ".".
 
 ## 4. EXPERIMENTAL: Qwen3 TTS on 8 GB graphics cards (`Assembly-CSharp.dll`), game build 0.1.74
 
@@ -94,7 +102,7 @@ so they never get the Qwen3 voice option.
 (method RVA `0x11D6E8`, IL code at file offset `0x11B8F4`):
 - IL `0x0002` `ldc.i4 8192` → `ldc.i4 7680` (operand at file `0x11B8F7`: `00 20 00 00` → `00 1E 00 00`)
 - IL `0x0073` `ldc.i4 16000` → `ldc.i4 15000` (operand at file `0x11B968`: `80 3E 00 00` → `98 3A 00 00`)
-- Result SHA-256 `3914ec19783fb0bf29bb470636ec1d14e911fa7041d4067425af81c651476bc6`.
+- With only this fix on, the file's SHA-256 is `3914ec19783fb0bf29bb470636ec1d14e911fa7041d4067425af81c651476bc6` (same as v4.3); it combines freely with 3c/3d.
 
 All other checks are unchanged. Whether the Qwen3 model actually runs well next to the game on an 8 GB card has not been tested,
 which is why this is opt-in and marked experimental.
