@@ -17,7 +17,14 @@ static partial class Fixer
     static readonly byte[] OriginalCall = { 0x28, 0x5b, 0x38, 0x00, 0x06 };
     static readonly byte[] PatchedCall  = { 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-    enum CpuFixState { NotNeeded, Installed, Installable, UnknownVersion }
+    enum CpuFixState { NotNeeded, Installed, Installable, UnknownVersion, FixedByDevelopers }
+
+    // Since 0.1.74 the game ships its own AVX backend as avx\ggml-cpu-avx.dll (different module name),
+    // which fixes the preload clash this fix worked around.
+    static bool DeveloperAvxFixPresent(string g)
+    {
+        return File.Exists(Path.Combine(Path.Combine(Path.Combine(g, PluginRel), "avx"), "ggml-cpu-avx.dll"));
+    }
 
     static string ScriptsPath(string g) { return Path.Combine(g, ScriptsRel); }
     static string GgmlCpuPath(string g) { return Path.Combine(Path.Combine(g, PluginRel), "ggml-cpu.dll"); }
@@ -32,6 +39,7 @@ static partial class Fixer
     static CpuFixState GetCpuFixState(string g, bool hasAvx2)
     {
         if (CpuFixInstalled(g)) return CpuFixState.Installed;
+        if (DeveloperAvxFixPresent(g)) return CpuFixState.FixedByDevelopers;
         if (hasAvx2) return CpuFixState.NotNeeded;
         string s = ScriptsPath(g), a = AvxPath(g);
         if (!File.Exists(s) || !File.Exists(GgmlCpuPath(g)) || !File.Exists(a)) return CpuFixState.UnknownVersion;
@@ -62,17 +70,34 @@ static partial class Fixer
     static bool UninstallCpuFix(string g)
     {
         string scripts = ScriptsPath(g), ggml = GgmlCpuPath(g);
-        if (!File.Exists(scripts + CpuBackupSuffix) && !File.Exists(ggml + CpuBackupSuffix) && !CpuFixInstalled(g)) return true;
+        string sb = scripts + CpuBackupSuffix, gb = ggml + CpuBackupSuffix;
         bool ok = true;
-        string sb = scripts + CpuBackupSuffix;
-        if (Sha256(scripts) != ScriptsOriginal)
+        // Only ever restore over OUR patched files. If a game update replaced a file, keep the game's version
+        // and just remove the stale backup (restoring it would mix old and new game files).
+        if (File.Exists(scripts) && Sha256(scripts) == ScriptsPatched)
         {
             if (File.Exists(sb) && Sha256(sb) == ScriptsOriginal) File.Copy(sb, scripts, true); else ok = false;
         }
-        string gb = ggml + CpuBackupSuffix;
-        if (File.Exists(gb)) File.Copy(gb, ggml, true); else if (Sha256(ggml) == AvxBuild) ok = false;
+        if (File.Exists(ggml) && Sha256(ggml) == AvxBuild)
+        {
+            if (File.Exists(gb) && Sha256(gb) != AvxBuild) File.Copy(gb, ggml, true); else ok = false;
+        }
         if (ok) { TryDelete(sb); TryDelete(gb); }
         return ok;
+    }
+
+    // After a game update that includes the developers' own fix: put back their original ggml-cpu.dll if our
+    // copy is still there, and remove our leftover backups.
+    static void CleanUpAfterDeveloperFix(string g)
+    {
+        string scripts = ScriptsPath(g), ggml = GgmlCpuPath(g), gb = ggml + CpuBackupSuffix;
+        if (File.Exists(ggml) && Sha256(ggml) == AvxBuild && File.Exists(gb) && Sha256(gb) != AvxBuild)
+        {
+            File.Copy(gb, ggml, true);
+            Line("  Removed the old CPU fix's replacement file - the game now has its own fix.");
+        }
+        if (!File.Exists(scripts) || Sha256(scripts) != ScriptsPatched) TryDelete(scripts + CpuBackupSuffix);
+        if (!File.Exists(ggml) || Sha256(ggml) != AvxBuild) TryDelete(gb);
     }
 
     static void CpuBackupOnce(string path, string requiredHash)

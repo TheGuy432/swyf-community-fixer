@@ -38,6 +38,12 @@ static partial class Fixer
         {
             string p = Path.Combine(dir, n), bak = p + BackupSuffix;
             if (!File.Exists(bak)) { if (File.Exists(p) && ReadFtype(p) == FtypeQ8) ok = false; continue; }
+            if (File.Exists(p) && ReadFtype(p) != FtypeQ8)
+            {
+                // The game (update / Verify) already put its own model back: keep it, drop our stale backup.
+                TryDelete(bak);
+                continue;
+            }
             if (ReadFtype(bak) != FtypeF16) { ok = false; continue; }
             if (File.Exists(p)) File.Delete(p);
             File.Move(bak, p);

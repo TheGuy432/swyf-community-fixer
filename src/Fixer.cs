@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 static partial class Fixer
 {
-    const string Version = "4.0.1";
+    const string Version = "4.0.2";
     const string AppId = "4954910";
     const string GameFolderName = "Scam With Your Friends";
     const string GameExe = "Scam With Your Friends.exe";
@@ -122,6 +122,10 @@ static partial class Fixer
         {
             case CpuFixState.NotNeeded: Line("  OK - no CPU fix needed."); break;
             case CpuFixState.Installed: Line("  Old CPU fix: already installed."); break;
+            case CpuFixState.FixedByDevelopers:
+                Line("  OK - this game version has the developers' own old-CPU fix, so ours isn't needed.");
+                CleanUpAfterDeveloperFix(gameDir);
+                break;
             case CpuFixState.Installable:
                 Console.Write("  Installing old CPU fix (no AVX2) ... ");
                 InstallCpuFix(gameDir);
