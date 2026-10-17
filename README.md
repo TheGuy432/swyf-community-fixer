@@ -1,9 +1,9 @@
 # SWYF Speech Fixer
 
-**Unofficial** community fix for speech-to-text in *Scam With Your Friends*.
+**Unofficial** community fix for speech-to-text and caller voices in *Scam With Your Friends*.
 Not made, endorsed or supported by the game's developers (Jatater Worldwide).
 
-> **Use it when:** your speech never turns into text, the game says *"An incompatible Whisper CPU backend was already loaded"*, the game crashes when speech starts, or transcription is very slow on an older PC.
+> **Use it when:** your speech never turns into text, the game says *"An incompatible Whisper CPU backend was already loaded"*, the game crashes when speech starts, transcription is very slow on an older PC, or callers in **Portuguese** get cut off after a fraction of a second.
 
 ## Download
 
@@ -15,10 +15,23 @@ Every release file is built automatically by GitHub from the code in this reposi
 1. Close the game completely.
 2. Run `SWYF-Speech-Fixer.exe`. It finds the game automatically, or asks for the folder.
    Windows may warn about an unknown program: **More info → Run anyway**.
-3. Read what it says. If you see **ACTION NEEDED**, follow the steps (adding a Steam launch option).
+3. A menu shows each fix and whether your PC needs it. The recommended ones are already ticked:
+   type a number to tick/untick a fix, then press **Enter**. Unticking a fix that's installed removes it.
+4. Read what it says. If you see **ACTION NEEDED**, follow the steps (adding a Steam launch option).
 
-To **undo everything**, run it again and type `U`.
+To **undo everything**, run it again and type `U` in the menu.
+The tool is in **English** and **Brazilian Portuguese**. It switches to Portuguese automatically on a Portuguese Windows or when the game is set to Português; press `P` / `E` in the menu to switch.
 A game update or Steam's *Verify integrity of game files* also restores the original files. Just run the tool again afterwards.
+
+## Em português
+
+1. Feche o jogo completamente.
+2. Rode o `SWYF-Speech-Fixer.exe` (baixe na página [**Releases**](../../releases)). Se o Windows avisar sobre um programa desconhecido: **Mais informações → Executar assim mesmo**.
+3. Um menu mostra cada correção. As recomendadas já vêm marcadas: digite um número para marcar/desmarcar e aperte **Enter**.
+4. Para **desfazer tudo**, rode de novo e digite `U`.
+
+Corrige, entre outras coisas, as vozes em português sendo cortadas depois de uma fração de segundo (versão 0.1.74 do jogo).
+Ferramenta **não oficial**, não feita pelos desenvolvedores do jogo.
 
 ## What it does
 
@@ -26,8 +39,9 @@ A game update or Steam's *Verify integrity of game files* also restores the orig
 |---|---|---|
 | **1. Processor check** | CPUs without AVX2 (e.g. Intel i5-2500, i7-3770) on game build 0.1.71 | Fixes *"An incompatible Whisper CPU backend was already loaded"* by using the developers' own AVX speech file |
 | **2. Speech speed-up** | Everyone, biggest gain on older PCs | Converts the speech model to 8-bit (same model, half the size), and sizes the listening window to what you said instead of always 30 s |
-| **3. Graphics card test** | Everyone | Runs the game's own speech engine on your graphics card in a separate test process. If it crashes or freezes, tells you to add the launch option `-whisper-cpu` |
-| **4. Tips** | Slower PCs | Reminds you to turn off the BanditCam watermark and cap FPS |
+| **3. Caller voices** | Everyone, needed for Portuguese (game 0.1.74) | Stops Portuguese callers being cut off after ~0.3 s ("DAL-"). The Portuguese voice model briefly signals "done" before it starts talking; the fix ignores that signal for the first ~0.6 s of each line |
+| **4. Graphics card test** | Everyone | Runs the game's own speech engine on your graphics card in a separate test process. If it crashes or freezes, tells you to add the launch option `-whisper-cpu` |
+| **Tips** | Slower PCs | Reminds you to turn off the BanditCam watermark and cap FPS |
 
 On an Intel i5-2500 with a 2010 graphics card, these steps took speech-to-text from *crashing / never finishing* to **about 4 seconds per sentence**.
 
@@ -41,6 +55,7 @@ Only these, and only if they are the exact known versions (checked by SHA-256). 
 | `Scam With Your Friends_Data\Plugins\x86_64\ggml-cpu.dll` | replaced with the game's own `avx\ggml-cpu.dll` (step 1) | `.oldcpufix171-backup` |
 | `Scam With Your Friends_Data\Managed\com.whisper.unity.dll` | one 119-byte method body (step 2) | `.speedup-backup` |
 | `Scam With Your Friends_Data\StreamingAssets\Whisper\ggml-base.en.bin`, `ggml-base.bin` | converted to 8-bit (step 2) | `.speedup-backup` |
+| `Scam With Your Friends_Data\Managed\PocketTTS.dll` | 72 bytes in the voice generation loop (step 3) | `.voicefix-backup` |
 
 It **reads** (never writes) your Steam launch options for this game and the game's BanditCam watermark setting, only to show the right advice.
 It downloads nothing and sends nothing anywhere. Exact byte-level details are in [PATCHES.md](PATCHES.md).
@@ -61,7 +76,7 @@ Some machine-learning engines (generic names like `Malicious (score: 100)`, `sus
 
 ## FAQ
 
-**Does it change the game for other players?** No. It only changes speech recognition on your own PC.
+**Does it change the game for other players?** No. It only changes speech recognition and caller voice generation on your own PC.
 
 **Can I get banned?** It doesn't touch gameplay, networking or anti-cheat. Still, it's unofficial; use it at your own risk.
 

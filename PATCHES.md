@@ -55,7 +55,33 @@ param.audio_ctx = ctx;
 - Measured: encoder for a 1.1 s clip went from 8.8 s to 1.4–1.6 s on an AVX-only build.
   In-game on an i5-2500, a 2.1 s phrase was transcribed in 4.1 s, against about 15 s before.
 
-## 3. Graphics card test (no files changed)
+## 3. Caller voice fix (`PocketTTS.dll`), game builds 0.1.71–0.1.74
+
+**Problem.** In 0.1.74 every Portuguese caller line is cut off after about 0.3 s (players hear "DAL-" from "DALE!").
+The game logs `provider=Pocket language=pt stage=generation_done ... queuedAudioMs=290` for almost every line, whatever its length.
+The Pocket TTS loop in `PocketTTS.PocketTTSModel.RunPrompt` generates one 80 ms frame per step and stops 3 frames after the
+first frame whose `eos_logit` is above -4. The Portuguese model's `eos_logit` is above -4 for its first 3–5 frames
+(e.g. -2.5, -3.1, -3.7, -4.9, ...) and only rises again at the real end of the sentence, so generation stops after 4 frames.
+English never does this: its first frames are around -7 to -10.
+
+**Fix.** In `PocketTTS.dll` (SHA-256 `b47b39cd9be3417efd2c1c0e61a124f762685b4caf116e20e08165b706bf11bf`, identical in 0.1.71 and 0.1.74),
+in `RunPrompt`, whose IL code starts at file offset `0x3280`:
+- IL `0x06C6`–`0x06D7` (file `0x3946`, 18 bytes): `if (num13 < 0 && num15 > -4f) num13 = num14;` → 18 × `nop`.
+- IL `0x0793`–`0x07C8` (file `0x3A13`, 54 bytes), directly before the loop's break check, previously
+  `if (EnableProfiling) frameBirthTimes[num14] = lifeStopwatch.ElapsedMilliseconds;` (only feeds the `[TTS RT]` debug log),
+  now holds the same check with one extra condition, padded with `nop`:
+
+```csharp
+if (num13 < 0 && num14 >= 8 && num15 > -4f) num13 = num14;   // ignore "end of speech" in the first 8 frames (~0.64 s)
+```
+
+- Result SHA-256 `6cf88903554073d028f07fca9a8a8fd8274fa46f32b37e4518e226b6754bd109`.
+- Tested by running the game's Portuguese and English voice models outside the game with the same logic:
+  Portuguese lines go from 0.32 s to their full length (2.6–4.5 s) and still end on their own; the shortest real
+  sentence end seen was frame 13 (Portuguese) / 9 (English). English sentences are unchanged.
+  One-word lines ("Yes.", "Sim.") get up to ~0.5 s of near-silence added at the end.
+
+## 4. Graphics card test (no files changed)
 
 The tool starts itself again as a child process (`--vulkan-probe`).
 - The child loads the game's own `ggml-base.dll` and `ggml.dll` from `Plugins\x86_64`, with `KOLKATA_WHISPER_CPU_ONLY` removed from its environment.
@@ -66,7 +92,7 @@ The tool starts itself again as a child process (`--vulkan-probe`).
 
 It reads `Steam\userdata\*\config\localconfig.vdf` to see whether `-whisper-cpu` is already set. It never writes to it.
 
-## 4. Watermark tip (no files changed)
+## 5. Watermark tip (no files changed)
 
 Reads the Unity PlayerPrefs value `KolkataOS.BanditCam.Watermark` from
 `HKEY_CURRENT_USER\Software\Jatater Worldwide\Scam With Your Friends`, only to say whether the watermark is already off.
