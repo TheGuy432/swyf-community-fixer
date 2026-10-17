@@ -1,4 +1,4 @@
-// Old CPU fix (same logic and backup names as SWYF-OldCPU-Fix v3) for game build 0.1.71:
+﻿// Old CPU fix (same logic and backup names as SWYF-OldCPU-Fix v3) for game build 0.1.71:
 // Unity preloads Plugins\x86_64\ggml-cpu.dll (AVX2 build), so the game's EnsureAvxBackend() check always fails
 // on CPUs without AVX2. Fix: copy the developer's own avx\ggml-cpu.dll over it and skip that call.
 using System;

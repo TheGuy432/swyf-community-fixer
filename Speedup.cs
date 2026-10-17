@@ -1,4 +1,4 @@
-// SWYF Speech Speed-up (UNOFFICIAL) - for Scam With Your Friends
+﻿// SWYF Speech Speed-up (UNOFFICIAL) - for Scam With Your Friends
 // Converts the game's Whisper speech-recognition models (StreamingAssets\Whisper\ggml-base*.bin) from
 // 16-bit (f16) weights to 8-bit (q8_0) weights, exactly like whisper.cpp's own "quantize" tool does.
 // Same model, near-identical accuracy, much faster on older CPUs (no F16C, e.g. Intel 2nd gen Core / Sandy Bridge),

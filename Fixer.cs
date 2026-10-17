@@ -1,4 +1,4 @@
-// SWYF Speech Fixer v4.2 (UNOFFICIAL) - for Scam With Your Friends
+﻿// SWYF Speech Fixer v4.2 (UNOFFICIAL) - for Scam With Your Friends
 // One tool for the community fixes. The player picks what to install from a menu:
 //   1. Old CPU fix (CPUs without AVX2, game build 0.1.71)
 //   2. Speech speed-up (8-bit speech model + listening window sized to the phrase)

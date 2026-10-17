@@ -1,4 +1,4 @@
-// Vulkan speech test: a child process loads the game's own ggml.dll (the developer's build, which loads
+﻿// Vulkan speech test: a child process loads the game's own ggml.dll (the developer's build, which loads
 // ggml-vulkan.dll unless KOLKATA_WHISPER_CPU_ONLY=1), enumerates devices and initializes each GPU device -
 // the same steps the game takes when speech starts. If that crashes or hangs, only the child dies.
 using System;

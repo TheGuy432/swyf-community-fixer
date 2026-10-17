@@ -1,4 +1,4 @@
-// Caller voice fix (PocketTTS.dll, game builds 0.1.71 - 0.1.74):
+﻿// Caller voice fix (PocketTTS.dll, game builds 0.1.71 - 0.1.74):
 // The Portuguese voice model's "end of speech" score is high for its first 3-5 steps (~0.3 s) before it starts
 // talking. The game stops at the first such step, so every Portuguese caller line is cut off after ~0.3 s.
 // Fix: ignore the end-of-speech score for the first 8 steps (~0.64 s). Other languages never end that early,
