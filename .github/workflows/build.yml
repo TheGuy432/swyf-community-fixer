@@ -1,0 +1,91 @@
+name: Build and verify
+
+# Every download on the Releases page is built here, by GitHub, from the code in this repository.
+# Open any run under the "Actions" tab to see exactly how the .exe was made and its SHA-256.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to attach the .exe to a release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build SWYF-Speech-Fixer.exe
+        shell: cmd
+        run: build.cmd
+
+      - name: Write SHA-256 checksum
+        shell: pwsh
+        run: |
+          $h = (Get-FileHash dist\SWYF-Speech-Fixer.exe -Algorithm SHA256).Hash.ToLower()
+          "$h  SWYF-Speech-Fixer.exe" | Out-File -Encoding ascii dist\SHA256SUMS.txt
+          Get-Content dist\SHA256SUMS.txt
+          "### SWYF-Speech-Fixer.exe SHA-256`n`n``$h``" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SWYF-Speech-Fixer
+          path: dist/
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist\SWYF-Speech-Fixer.exe dist\SHA256SUMS.txt --clobber
+
+  # Proves the speech-model conversion produces exactly the same file as whisper.cpp's own official
+  # "quantize" tool, on a full-size test model (random weights, real tensor layout).
+  verify-model-conversion:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: SWYF-Speech-Fixer
+          path: dist
+
+      - name: Get whisper.cpp v1.7.5 (the version the game uses)
+        uses: actions/checkout@v4
+        with:
+          repository: ggml-org/whisper.cpp
+          ref: v1.7.5
+          path: whisper.cpp
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build whisper.cpp's official quantize tool
+        shell: pwsh
+        run: |
+          cmake -S whisper.cpp -B wbuild -DBUILD_SHARED_LIBS=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_SDL2=OFF
+          cmake --build wbuild --config Release --target quantize -j 4
+
+      - name: Compare our conversion with the official tool
+        shell: pwsh
+        run: |
+          pip install numpy
+          $quantize = (Get-ChildItem wbuild -Recurse -Filter quantize.exe | Select-Object -First 1).FullName
+          foreach ($m in @("base.en", "base")) {
+            python tools/genmodel.py "whisper.cpp/models/for-tests-ggml-$m.bin" "test-$m.bin" 1
+            & $quantize "test-$m.bin" "official-$m.bin" q8_0 | Out-Null
+            & dist\SWYF-Speech-Fixer.exe --convert "test-$m.bin" "ours-$m.bin"
+            $a = (Get-FileHash "official-$m.bin").Hash
+            $b = (Get-FileHash "ours-$m.bin").Hash
+            "$m  official=$a  ours=$b"
+            if ($a -ne $b) { throw "Conversion of $m differs from whisper.cpp's official tool" }
+          }
+          "Model conversion is byte-identical to whisper.cpp's official quantize tool." | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
