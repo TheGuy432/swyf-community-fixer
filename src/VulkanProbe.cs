@@ -29,20 +29,30 @@ static partial class Fixer
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool SetDllDirectoryW(string path);
     [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)] static extern IntPtr GetProcAddress(IntPtr module, string name);
     [DllImport("kernel32.dll")] static extern uint SetErrorMode(uint mode);
+#if SWYF_TEST
+    // Lets the developer test suite run the probe on Linux (mono + a Linux build of ggml). Not in release builds.
     [DllImport("libdl.so.2", EntryPoint = "dlopen")] static extern IntPtr dlopen(string path, int flags);
     [DllImport("libdl.so.2", EntryPoint = "dlsym")] static extern IntPtr dlsym(IntPtr h, string name);
-
-    static bool IsUnix { get { return Environment.OSVersion.Platform == PlatformID.Unix; } } // test runs only
+    static bool IsUnix { get { return Environment.OSVersion.Platform == PlatformID.Unix; } }
+#else
+    static bool IsUnix { get { return false; } }
+#endif
 
     static IntPtr LoadLib(string dir, string winName, string unixName)
     {
+#if SWYF_TEST
         if (IsUnix) return dlopen(Path.Combine(dir, unixName), 2 | 0x100);
+#endif
         return LoadLibraryExW(Path.Combine(dir, winName), IntPtr.Zero, 0x00000008); // LOAD_WITH_ALTERED_SEARCH_PATH
     }
 
     static T Fn<T>(IntPtr lib, string name) where T : class
     {
+#if SWYF_TEST
         IntPtr p = IsUnix ? dlsym(lib, name) : GetProcAddress(lib, name);
+#else
+        IntPtr p = GetProcAddress(lib, name);
+#endif
         if (p == IntPtr.Zero) throw new EntryPointNotFoundException(name);
         return Marshal.GetDelegateForFunctionPointer(p, typeof(T)) as T;
     }
@@ -54,8 +64,10 @@ static partial class Fixer
     {
         if (!IsUnix) SetErrorMode(0x0001 | 0x0002 | 0x8000); // no crash dialogs
         Environment.SetEnvironmentVariable("KOLKATA_WHISPER_CPU_ONLY", null);
+#if SWYF_TEST
         if (simulate == "crash") { Console.WriteLine("STAGE registry"); Console.Out.Flush(); Environment.FailFast("simulated crash"); }
         if (simulate == "hang") { Console.WriteLine("STAGE registry"); Console.Out.Flush(); System.Threading.Thread.Sleep(-1); }
+#endif
         if (!IsUnix) SetDllDirectoryW(pluginDir);
         IntPtr b = LoadLib(pluginDir, "ggml-base.dll", "libggml-base.so");
         IntPtr g = LoadLib(pluginDir, "ggml.dll", "libggml.so");
@@ -105,7 +117,10 @@ static partial class Fixer
             CreateNoWindow = true,
             WorkingDirectory = Path.GetTempPath(), // never leave crash files in the game folder
         };
-        string args = "--vulkan-probe \"" + pluginDir + "\"" + (simulate != null ? " --simulate=" + simulate : "");
+        string args = "--vulkan-probe \"" + pluginDir + "\"";
+#if SWYF_TEST
+        if (simulate != null) args += " --simulate=" + simulate;
+#endif
         if (IsUnix) { psi.FileName = "mono"; psi.Arguments = "\"" + self + "\" " + args; }
         else { psi.FileName = self; psi.Arguments = args; }
         psi.EnvironmentVariables.Remove("KOLKATA_WHISPER_CPU_ONLY");

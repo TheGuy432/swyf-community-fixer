@@ -52,11 +52,12 @@ You shouldn't have to take our word for it, so here is how to check:
 - **Read the code.** It's about 1,000 lines of plain C# in [`src/`](src). No obfuscation, no network code.
 - **Built by GitHub, not on someone's PC.** The [Actions](../../actions) tab shows every build: the exact commands, and the SHA-256 of the .exe it produced. Releases are attached automatically by that build.
 - **Check your download.** In Command Prompt: `certutil -hashfile SWYF-Speech-Fixer.exe SHA256` and compare with `SHA256SUMS.txt` on the release.
-- **Scan it.** Upload it to [VirusTotal](https://www.virustotal.com). The link for each release is in its release notes.
+- **Scan it yourself** with your antivirus or [VirusTotal](https://www.virustotal.com) if you like.
 - **Model conversion proven identical.** Every build checks that the model conversion is byte-for-byte the same as [whisper.cpp](https://github.com/ggml-org/whisper.cpp)'s own official `quantize` tool.
 - **Build it yourself.** On any Windows 10/11 PC, run `build.cmd`. It uses the C# compiler that ships with Windows.
 
-**Why might an antivirus flag it?** It's an unsigned program that modifies another program's files, which is the same pattern game patchers and cheats use. A few generic detections ("patcher", "heuristic") are expected; check the VirusTotal results yourself.
+**Why might an antivirus flag it?** It's a new, unsigned program that modifies another program's files and starts a test copy of itself, which looks a lot like game patchers and cheats to automatic scanners.
+Some machine-learning engines (generic names like `Malicious (score: 100)`, `susgen`, `Malware.<random>`) flag brand-new unsigned programs like this. The major antiviruses, including Microsoft Defender, should show it as clean. If you're unsure, read the code or build it yourself.
 
 ## FAQ
 
@@ -71,6 +72,7 @@ You shouldn't have to take our word for it, so here is how to check:
 - `build.cmd`: builds `dist\SWYF-Speech-Fixer.exe`.
 - `SWYF-Speech-Fixer.exe --convert in.bin out.bin`: runs only the model conversion (used by the CI check).
 - `tools/genmodel.py`: generates full-size Whisper test models with random weights for that check.
+- Test-only options (`--assume-cpu`, `--simulate-probe`, Linux support for the GPU test) only exist when compiled with `/define:SWYF_TEST`. Release builds don't contain them.
 
 ## License
 

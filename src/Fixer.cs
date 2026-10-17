@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 static partial class Fixer
 {
-    const string Version = "4";
+    const string Version = "4.0.1";
     const string AppId = "4954910";
     const string GameFolderName = "Scam With Your Friends";
     const string GameExe = "Scam With Your Friends.exe";
@@ -21,7 +21,7 @@ static partial class Fixer
     [System.Runtime.InteropServices.DllImport("kernel32.dll")]
     static extern bool IsProcessorFeaturePresent(uint feature);
 
-    static string assumeCpu, simulateProbe;
+    static string assumeCpu, simulateProbe; // only settable in test builds (SWYF_TEST)
 
     static int Main(string[] args)
     {
@@ -33,7 +33,9 @@ static partial class Fixer
             if (a == "--vulkan-probe" && i + 1 < args.Length)
             {
                 string dir = args[++i], sim = null;
+#if SWYF_TEST
                 foreach (string x in args) if (x.StartsWith("--simulate=")) sim = x.Substring(11);
+#endif
                 try { return ProbeMain(dir, sim); }
                 catch (Exception e) { Console.WriteLine("PROBEERROR " + e.Message); return 4; }
             }
@@ -42,9 +44,11 @@ static partial class Fixer
                 try { Quantize(args[i + 1], args[i + 2]); Console.WriteLine("converted"); return 0; }
                 catch (Exception e) { Console.WriteLine("error: " + e.Message); return 1; }
             }
-            if (a.StartsWith("--assume-cpu=")) assumeCpu = a.Substring(13);
-            else if (a.StartsWith("--simulate-probe=")) simulateProbe = a.Substring(17);
-            else if (a == "--uninstall") uninstallFlag = true;
+#if SWYF_TEST
+            if (a.StartsWith("--assume-cpu=")) { assumeCpu = a.Substring(13); continue; }
+            if (a.StartsWith("--simulate-probe=")) { simulateProbe = a.Substring(17); continue; }
+#endif
+            if (a == "--uninstall") uninstallFlag = true;
             else if (a == "--no-pause") noPause = true;
             else gameDir = a.Trim(new[] { '"' });
         }
@@ -379,8 +383,10 @@ static partial class Fixer
         }
         catch { }
         if (!roots.Contains(@"C:\Program Files (x86)\Steam")) roots.Add(@"C:\Program Files (x86)\Steam");
-        string testRoot = Environment.GetEnvironmentVariable("SWYF_FIXER_TEST_STEAM"); // test hook
+#if SWYF_TEST
+        string testRoot = Environment.GetEnvironmentVariable("SWYF_FIXER_TEST_STEAM");
         if (!string.IsNullOrEmpty(testRoot)) roots.Insert(0, testRoot);
+#endif
         return roots;
     }
 
