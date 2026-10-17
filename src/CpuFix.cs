@@ -1,4 +1,4 @@
-// Old CPU fix (same logic and backup names as SWYF-OldCPU-Fix v3) for game build 0.1.71:
+﻿// Old CPU fix (same logic and backup names as SWYF-OldCPU-Fix v3) for game build 0.1.71:
 // Unity preloads Plugins\x86_64\ggml-cpu.dll (AVX2 build), so the game's EnsureAvxBackend() check always fails
 // on CPUs without AVX2. Fix: copy the developer's own avx\ggml-cpu.dll over it and skip that call.
 using System;
@@ -94,7 +94,7 @@ static partial class Fixer
         if (File.Exists(ggml) && Sha256(ggml) == AvxBuild && File.Exists(gb) && Sha256(gb) != AvxBuild)
         {
             File.Copy(gb, ggml, true);
-            Line("  Removed the old CPU fix's replacement file - the game now has its own fix.");
+            Line(Tr("  Removed the old CPU fix's replacement file - the game now has its own fix.", "  Removi o arquivo da correção antiga para CPU - o jogo agora tem a própria correção."));
         }
         if (!File.Exists(scripts) || Sha256(scripts) != ScriptsPatched) TryDelete(scripts + CpuBackupSuffix);
         if (!File.Exists(ggml) || Sha256(ggml) != AvxBuild) TryDelete(gb);
@@ -118,7 +118,7 @@ static partial class Fixer
             string target = w + ".disabled-by-oldcpufix";
             if (File.Exists(target)) File.Delete(target);
             File.Move(w, target);
-            Line("  Disabled the old BepInEx loader from the first fix version (it caused a crash).");
+            Line(Tr("  Disabled the old BepInEx loader from the first fix version (it caused a crash).", "  Desativei o carregador BepInEx da primeira versão da correção (ele causava travamento)."));
         }
     }
 

@@ -1,4 +1,4 @@
-// Vulkan speech test: a child process loads the game's own ggml.dll (the developer's build, which loads
+﻿// Vulkan speech test: a child process loads the game's own ggml.dll (the developer's build, which loads
 // ggml-vulkan.dll unless KOLKATA_WHISPER_CPU_ONLY=1), enumerates devices and initializes each GPU device -
 // the same steps the game takes when speech starts. If that crashes or hangs, only the child dies.
 using System;
@@ -145,12 +145,12 @@ static partial class Fixer
                 if (l.StartsWith("GPUOK ") && gpu == "") gpu = l.Substring(6);
             }
             r.GpuName = gpu;
-            string step = lastStage == "registry" ? "loading Vulkan" : lastStage.StartsWith("init ") ? "starting " + lastStage.Substring(5) : "starting the test";
-            if (!exited) { r.Outcome = ProbeOutcome.Hung; r.Detail = "step: " + step; }
+            string step = lastStage == "registry" ? Tr("loading Vulkan", "carregando o Vulkan") : lastStage.StartsWith("init ") ? Tr("starting ", "iniciando ") + lastStage.Substring(5) : Tr("starting the test", "iniciando o teste");
+            if (!exited) { r.Outcome = ProbeOutcome.Hung; r.Detail = Tr("step: ", "etapa: ") + step; }
             else if (p.ExitCode == 0) r.Outcome = ProbeOutcome.Passed;
             else if (p.ExitCode == 2) r.Outcome = ProbeOutcome.NoGpu;
             else if (p.ExitCode == 3) { r.Outcome = ProbeOutcome.LoadFailed; r.Detail = text.Trim(); }
-            else { r.Outcome = ProbeOutcome.Crashed; r.Detail = "step: " + step + ", code 0x" + p.ExitCode.ToString("X"); }
+            else { r.Outcome = ProbeOutcome.Crashed; r.Detail = Tr("step: ", "etapa: ") + step + Tr(", code 0x", ", código 0x") + p.ExitCode.ToString("X"); }
         }
         return r;
     }

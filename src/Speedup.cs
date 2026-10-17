@@ -1,4 +1,4 @@
-// SWYF Speech Speed-up (UNOFFICIAL) - for Scam With Your Friends
+﻿// SWYF Speech Speed-up (UNOFFICIAL) - for Scam With Your Friends
 // Converts the game's Whisper speech-recognition models (StreamingAssets\Whisper\ggml-base*.bin) from
 // 16-bit (f16) weights to 8-bit (q8_0) weights, exactly like whisper.cpp's own "quantize" tool does.
 // Same model, near-identical accuracy, much faster on older CPUs (no F16C, e.g. Intel 2nd gen Core / Sandy Bridge),
@@ -48,9 +48,9 @@ static partial class Fixer
             if (File.Exists(p)) File.Delete(p);
             File.Move(bak, p);
         }
-        Line("");
-        if (ok) Line("Original speech model files restored.");
-        else Line("Could not restore everything. Run Steam > Properties > Installed Files > Verify integrity of game files.");
+        if (ok) Line(Tr("  Original speech model files restored.", "  Arquivos originais do modelo de voz restaurados."));
+        else Line(Tr("  Could not restore everything. Run Steam > Properties > Installed Files > Verify integrity of game files.",
+                     "  Não consegui restaurar tudo. Use Steam > Propriedades > Arquivos instalados > Verificar integridade dos arquivos do jogo."));
         return ok ? 0 : 1;
     }
 
@@ -76,10 +76,10 @@ static partial class Fixer
         byte[] data = File.ReadAllBytes(dll);
         byte[] ob = Hex(OrigBody);
         Buffer.BlockCopy(ob, 0, data, BodyOffset, ob.Length);
-        if (Sha256(data) != DllOriginal) { Line("Could not restore com.whisper.unity.dll. Run Steam > Verify integrity of game files."); return 1; }
+        if (Sha256(data) != DllOriginal) { Line(Tr("  Could not restore com.whisper.unity.dll. Run Steam > Verify integrity of game files.", "  Não consegui restaurar o com.whisper.unity.dll. Use Steam > Verificar integridade dos arquivos do jogo.")); return 1; }
         File.WriteAllBytes(dll, data);
         try { File.Delete(dll + BackupSuffix); } catch { }
-        Line("Shorter listening window removed - original com.whisper.unity.dll restored.");
+        Line(Tr("  Shorter listening window removed - original com.whisper.unity.dll restored.", "  Janela de escuta menor removida - com.whisper.unity.dll original restaurado."));
         return 0;
     }
 
