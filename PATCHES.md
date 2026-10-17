@@ -81,7 +81,25 @@ if (num13 < 0 && num14 >= 8 && num15 > -4f) num13 = num14;   // ignore "end of s
   sentence end seen was frame 13 (Portuguese) / 9 (English). English sentences are unchanged.
   One-word lines ("Yes.", "Sim.") get up to ~0.5 s of near-silence added at the end.
 
-## 4. Graphics card test (no files changed)
+## 4. EXPERIMENTAL: Qwen3 TTS on 8 GB graphics cards (`Assembly-CSharp.dll`), game build 0.1.74
+
+Off unless the player ticks it.
+
+**Problem.** `Kolkata.QwenTts.QwenWorkerClient.HardwareEligible(vramMb, ramMb, availableMb, threads, vendor, device, ...)` returns true only if
+`vramMb >= 8192` and `ramMb >= 16000` (plus NVIDIA/AMD, not a blocked device, `availableMb >= 6144`, `threads >= 4`, 64-bit Windows).
+8 GB cards report less than 8192 MB (an RTX 4060 shows `VRAM: 7957 MB`), and PCs with 16 GB report about 15700–15900 MB,
+so they never get the Qwen3 voice option.
+
+**Patch.** In `Assembly-CSharp.dll` (SHA-256 `99791cf93ec829d4784ee514ab78eba19e5e4a7ea841b291d979432a5c911d8f`), in `HardwareEligible`
+(method RVA `0x11D6E8`, IL code at file offset `0x11B8F4`):
+- IL `0x0002` `ldc.i4 8192` → `ldc.i4 7680` (operand at file `0x11B8F7`: `00 20 00 00` → `00 1E 00 00`)
+- IL `0x0073` `ldc.i4 16000` → `ldc.i4 15000` (operand at file `0x11B968`: `80 3E 00 00` → `98 3A 00 00`)
+- Result SHA-256 `3914ec19783fb0bf29bb470636ec1d14e911fa7041d4067425af81c651476bc6`.
+
+All other checks are unchanged. Whether the Qwen3 model actually runs well next to the game on an 8 GB card has not been tested,
+which is why this is opt-in and marked experimental.
+
+## 5. Graphics card test (no files changed)
 
 The tool starts itself again as a child process (`--vulkan-probe`).
 - The child loads the game's own `ggml-base.dll` and `ggml.dll` from `Plugins\x86_64`, with `KOLKATA_WHISPER_CPU_ONLY` removed from its environment.
@@ -92,7 +110,7 @@ The tool starts itself again as a child process (`--vulkan-probe`).
 
 It reads `Steam\userdata\*\config\localconfig.vdf` to see whether `-whisper-cpu` is already set. It never writes to it.
 
-## 5. Watermark tip (no files changed)
+## 6. Watermark tip (no files changed)
 
 Reads the Unity PlayerPrefs value `KolkataOS.BanditCam.Watermark` from
 `HKEY_CURRENT_USER\Software\Jatater Worldwide\Scam With Your Friends`, only to say whether the watermark is already off.

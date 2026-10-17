@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 
 static partial class Fixer
 {
-    const string Version = "4.2.0";
+    const string Version = "4.3.0";
     const string AppId = "4954910";
     const string GameFolderName = "Scam With Your Friends";
     const string GameExe = "Scam With Your Friends.exe";
@@ -145,8 +145,9 @@ static partial class Fixer
         var cpu = new Item();
         var speed = new Item();
         var voice = new Item();
+        var qwen = new Item();
         var gpu = new Item();
-        var items = new[] { cpu, speed, voice, gpu };
+        var items = new[] { cpu, speed, voice, qwen, gpu };
 
         string dllHash = File.Exists(dll) ? Sha256(dll) : null;
         bool speedInstalled = ModelsConverted(modelDir) || dllHash == DllPatched;
@@ -157,6 +158,7 @@ static partial class Fixer
             if (File.Exists(p) && ReadFtype(p) == FtypeF16) speedTodo = true;
         }
         string pocketHash = File.Exists(PocketPath(gameDir)) ? Sha256(PocketPath(gameDir)) : null;
+        string asmHash = File.Exists(GameAsmPath(gameDir)) ? Sha256(GameAsmPath(gameDir)) : null;
 
         Action describe = () =>
         {
@@ -187,6 +189,18 @@ static partial class Fixer
                                        "não instalada - impede que as vozes em português sejam cortadas depois de uma fração de segundo")
                 : Tr("not available for this game version (maybe already fixed)", "não disponível para esta versão do jogo (talvez já corrigido)");
 
+            qwen.Name = Tr("EXPERIMENTAL: Qwen3 TTS on 8 GB graphics cards / 16 GB RAM",
+                           "EXPERIMENTAL: Qwen3 TTS em placas de vídeo de 8 GB / 16 GB de RAM");
+            qwen.Installed = asmHash == AsmPatched;
+            qwen.Available = asmHash == AsmPatched || asmHash == AsmOriginal;
+            qwen.Status = qwen.Installed ? Tr("installed - untick to remove if the game stutters or crashes",
+                                              "instalado - desmarque para remover se o jogo travar ou fechar")
+                : qwen.Available ? Tr("off - unlocks the Qwen3 voices on cards that report just under 8 GB. May stutter,\n"
+                                      + "          run out of memory or crash. Only tick this if you want to try it.",
+                                      "desligado - libera as vozes Qwen3 em placas que mostram um pouco menos de 8 GB. Pode\n"
+                                      + "          travar, ficar sem memória ou fechar o jogo. Só marque se quiser testar.")
+                : Tr("not available for this game version", "não disponível para esta versão do jogo");
+
             gpu.Name = Tr("Graphics card speech test", "Teste da placa de vídeo");
             gpu.Installed = false;
             gpu.Available = hasAvx;
@@ -196,6 +210,7 @@ static partial class Fixer
         };
         describe();
         foreach (Item it in items) it.Wanted = it.Available;   // recommended: everything that applies
+        qwen.Wanted = qwen.Installed;                           // experimental: only when the player ticks it
 
         // ---- Menu ----
         while (true)
@@ -268,6 +283,13 @@ static partial class Fixer
             Header(++step, steps, voice.Name);
             if (voice.Wanted) InstallVoiceFix(gameDir);
             else { UninstallVoiceFix(gameDir); }
+        }
+
+        if (qwen.Available && (qwen.Wanted || qwen.Installed))
+        {
+            Header(++step, steps, qwen.Name);
+            if (qwen.Wanted) InstallQwenFix(gameDir);
+            else { UninstallQwenFix(gameDir); }
         }
 
         bool gpuProblem = false, gpuNone = false;
@@ -421,6 +443,7 @@ static partial class Fixer
         if (UninstallModels(modelDir) != 0) ok = false;
         if (UninstallDll(dll) != 0) ok = false;
         if (UninstallVoiceFix(gameDir) != 0) ok = false;
+        if (UninstallQwenFix(gameDir) != 0) ok = false;
         Line("");
         if (ok)
         {
