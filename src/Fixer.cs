@@ -54,6 +54,15 @@ static partial class Fixer
                 try { return ProbeMain(dir, sim); }
                 catch (Exception e) { Console.WriteLine("PROBEERROR " + e.Message); return 4; }
             }
+            if (a == "--speech-bench" && i + 7 < args.Length)
+            {
+                string sim = null;
+#if SWYF_TEST
+                foreach (string x in args) if (x.StartsWith("--simulate=")) sim = x.Substring(11);
+#endif
+                try { return BenchMain(args[i + 1], args[i + 2], args[i + 3], args[i + 4], args[i + 5] == "1", int.Parse(args[i + 6]), args[i + 7] == "1", sim); }
+                catch (Exception e) { Console.WriteLine("BENCHERROR " + e.Message); return 4; }
+            }
             if (a == "--convert" && i + 2 < args.Length) // test hook (used by the GitHub build check)
             {
                 EnsureConsole();
@@ -70,6 +79,9 @@ static partial class Fixer
             if (a.StartsWith("--assume-lang=")) { assumeLanguage = a.Substring(14); continue; }
             if (a.StartsWith("--assume-provider=")) { assumeProvider = a.Substring(18); continue; }
             if (a.StartsWith("--assume-layers=")) { assumeLayers = a.Substring(16); continue; }
+            if (a.StartsWith("--simulate-bench=")) { simulateBench = a.Substring(17); continue; }
+            if (a.StartsWith("--assume-ram=")) { assumeRamMb = int.Parse(a.Substring(13)); continue; }
+            if (a.StartsWith("--assume-model-dir=")) { assumeModelDir = a.Substring(19); continue; }
             if (a.StartsWith("--test-")) { guiTest.Add(a); continue; }
 #endif
             if (a.StartsWith("--lang=")) lang = a.Substring(7).ToLowerInvariant();
@@ -220,7 +232,7 @@ static partial class Fixer
         if (r.Reason != CpuReason.None && !r.HasCpuOption)
         {
             Line("");
-            LaunchOptionPrompt(r.Launch, CpuReasonText(r.Reason, s));
+            LaunchOptionPrompt(r.Launch, CpuReasonText(r.Reason, s, r));
             if (r.KeepHint)
             {
                 Wrapped("  ", T("main.with_whisper_cpu_english_speech"));
@@ -302,6 +314,7 @@ static partial class Fixer
         Line("");
         bool ok = true;
         if (!UninstallCpuFix(gameDir)) { ok = false; Line(T("main.could_not_restore_old_cpu")); }
+        if (UninstallBigModel(modelDir) != 0) ok = false;   // before the speed-up: it restores what was there before it
         if (UninstallModels(modelDir) != 0) ok = false;
         if (UninstallDll(dll) != 0) ok = false;
         if (UninstallVoiceFix(gameDir) != 0) ok = false;

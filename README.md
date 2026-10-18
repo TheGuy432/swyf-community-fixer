@@ -63,6 +63,8 @@ the program. Lines you leave out show in English. `build.cmd` includes every fil
 | **5. Better English speech recognition** (0.1.74 only; built into the game since build 26020526) | English players whose speech runs on the processor: RTX 4060 Ti and a few other cards the game won't use for speech, or anyone with `-whisper-cpu`. Ticked automatically on those PCs if the processor is fast enough (AVX2, 8+ threads) | Since 0.1.74 the game switches English speech on those PCs to the small Moonshine model, which is much less accurate ("give me your pig, Cornwallard"). This keeps the normal Whisper model on the processor instead, the same one other languages already use there. Each sentence takes a bit longer to recognize |
 | **6. Graphics card test** | Everyone | Runs the game's own speech engine on your graphics card in a separate test process. If it crashes or freezes, tells you to add the launch option `-whisper-cpu`, and tests once more with Vulkan add-on layers (overlays, recorders, AMD switchable graphics) turned off to show whether one of them is the cause |
 | **Launch option advice** | PCs with AMD processor graphics + an NVIDIA card; players whose game language isn't English | Asks you to add `-whisper-cpu` even when the test passes: on AMD + NVIDIA PCs the game's speech often never finishes loading on the graphics card, and speech for languages other than English is very slow there (15-30 s per sentence). For German, Spanish, Arabic, Japanese and Chinese it also points to the game's own *Moonshine (6 languages)* setting |
+| **EXPERIMENTAL: Bigger speech model** | Players whose game language isn't English, with `-whisper-cpu`, a processor with AVX2 and 8+ threads, and 12 GB+ memory. Off unless you tick it | Replaces the game's small multilingual speech model (Whisper *base*) with Whisper *small*, which makes far fewer mistakes outside English but needs about 2-3× the work per sentence. Needs the extra download `SWYF-Speech-Model-small-q8.bin` from the [Releases](../../releases) page, next to the .exe or in your Downloads folder. Before installing it, it times the model on your processor with the game's own speech engine and only installs it if a 4-second sentence takes 2.5 s or less. English keeps the game's English model |
+| **EXPERIMENTAL: Speech speed test** | Anyone with slow speech recognition. Off unless you tick it | Times the game's own speech engine on a 4-second piece of one of the game's caller voice clips, in your game language, on your graphics card and on your processor, and tells you which is faster. Changes no files. A screenshot of the numbers helps us find out why speech is slow on some PCs |
 | **Tips** | Slower PCs | Reminds you to turn off the BanditCam watermark and cap FPS |
 
 On an Intel i5-2500 with a 2010 graphics card, these steps took speech-to-text from *crashing / never finishing* to **about 4 seconds per sentence**.
@@ -80,9 +82,10 @@ Only these, and only if they are the exact known versions (checked by SHA-256). 
 | `Scam With Your Friends_Data\Managed\PocketTTS.dll` | 74 bytes: end-of-line rule and text preparation (step 3) | none needed: every change is reversible byte for byte |
 | `Scam With Your Friends_Data\Managed\ScriptsAssDef.dll` | 2 bytes in the speech model choice (step 5) | `.whisperkeep-backup` |
 | `Scam With Your Friends_Data\Managed\Assembly-CSharp.dll` | card-number pauses (1 byte) and 66 filler lines (step 3); Qwen3 limits (8 bytes, step 4, only if you tick it) | none needed: every change is reversible byte for byte |
+| `Scam With Your Friends_Data\StreamingAssets\Whisper\ggml-base.bin` | replaced with the bigger speech model (only if you tick it) | `.bigmodel-backup` |
 
 It **reads** (never writes) your Steam launch options and installed build number for this game, and the game's BanditCam watermark, call language and speech recognition settings, only to show the right advice.
-It downloads nothing and sends nothing anywhere. Exact byte-level details are in [PATCHES.md](PATCHES.md).
+It downloads nothing and sends nothing anywhere (the bigger speech model is a separate download you make yourself). Exact byte-level details are in [PATCHES.md](PATCHES.md).
 
 ## Is it safe?
 
@@ -93,6 +96,7 @@ You shouldn't have to take our word for it, so here is how to check:
 - **Check your download.** In Command Prompt: `certutil -hashfile SWYF-Speech-Fixer.exe SHA256` and compare with `SHA256SUMS.txt` on the release.
 - **Scan it yourself** with your antivirus or [VirusTotal](https://www.virustotal.com) if you like.
 - **Model conversion proven identical.** Every build checks that the model conversion is byte-for-byte the same as [whisper.cpp](https://github.com/ggml-org/whisper.cpp)'s own official `quantize` tool.
+- **The bigger speech model is built by GitHub too.** The same build downloads OpenAI's Whisper *small* model (`ggml-small.bin`) from whisper.cpp's official Hugging Face page, checks its SHA-1, converts it, checks the result against the official tool and attaches it to the release with its SHA-256. The model is MIT-licensed, see [WHISPER-MODEL-LICENSE.txt](WHISPER-MODEL-LICENSE.txt).
 - **Build it yourself.** On any Windows 10/11 PC, run `build.cmd`. It uses the C# compiler that ships with Windows.
 
 **Why might an antivirus flag it?** It's a new, unsigned program that modifies another program's files and starts a test copy of itself, which looks a lot like game patchers and cheats to automatic scanners.
@@ -111,9 +115,10 @@ Some machine-learning engines (generic names like `Malicious (score: 100)`, `sus
 - `build.cmd`: builds `dist\SWYF-Speech-Fixer.exe` (a window app; `src\*.cs` plus every `lang\*.txt` embedded as a resource).
 - `src/Core.cs` has the shared logic (what's installed, applying, tips), `src/Gui.cs` the window, `src/Fixer.cs` the text mode,
   `src/Lang.cs` the translation lookup (`T("key")`, falls back to English per line).
-- `SWYF-Speech-Fixer.exe --convert in.bin out.bin`: runs only the model conversion (used by the CI check).
+- `SWYF-Speech-Fixer.exe --convert in.bin out.bin`: runs only the model conversion (used by the CI check and to build the bigger speech model).
+- `--speech-bench <plugin dir> <model> <wav> <language> <gpu 0/1> <audio_ctx> <capped 0/1>`: the speech speed test's child process.
 - `tools/genmodel.py`: generates full-size Whisper test models with random weights for that check.
-- Test-only options (`--assume-cpu`, `--assume-gpu`, `--assume-threads`, `--assume-build`, `--assume-lang`, `--assume-provider`, `--assume-layers`, `--simulate-probe`, `--test-*` for driving the window, Linux support for the GPU test) only exist when compiled with `/define:SWYF_TEST`. Release builds don't contain them.
+- Test-only options (`--assume-cpu`, `--assume-gpu`, `--assume-threads`, `--assume-build`, `--assume-lang`, `--assume-provider`, `--assume-layers`, `--assume-ram`, `--assume-model-dir`, `--simulate-probe`, `--simulate-bench`, `--test-*` for driving the window, Linux support for the GPU test) only exist when compiled with `/define:SWYF_TEST`. Release builds don't contain them.
 
 ## License
 

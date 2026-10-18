@@ -25,6 +25,7 @@ static partial class Fixer
         public bool Untested;       // not confirmed in the game yet -> UNTESTED pill
         public bool Experimental;   // shown in the separate experimental box
         public bool IsTest;         // the graphics card test: changes no files
+        public bool ShowAlways;     // experimental item shown even when not available (with its reason)
 
         public bool IsChange
         {
@@ -54,18 +55,19 @@ static partial class Fixer
         public bool HasAvx, HasAvx2, SpeedInstalled, SpeedTodo, CpuSpeech, StrongCpu;
         public bool OwnFixes;      // the game has the developers' own fixes (18 Oct 2026 update or newer)
         public bool AmdNvidia;     // AMD processor graphics + NVIDIA card
-        public int SteamBuild;
+        public int SteamBuild, RamMb;
+        public string DllHash, BigFile;
         public int Threads;
         public CpuFixState CpuState;
         public string PocketHash, AsmHash, SadHash;
         public PocketState Pocket;
         public AsmState Asm;
-        public Item Cpu, Speed, Voice, Qwen, Keep, Gpu;
+        public Item Cpu, Speed, Voice, Qwen, Keep, Gpu, Big, Bench;
         public Item[] Items;   // console menu order
     }
 
     // Why the player should add the -whisper-cpu launch option (None = no need, or they already run speech on the CPU).
-    enum CpuReason { None, GpuTest, AmdNvidia, Language }
+    enum CpuReason { None, GpuTest, AmdNvidia, Language, Bench }
 
     sealed class ApplyResult
     {
@@ -74,6 +76,8 @@ static partial class Fixer
         public List<string> Layers;        // implicit layers on this PC (only after a failed test)
         public bool GpuProblem, GpuNone, HasCpuOption, KeepHint;
         public CpuReason Reason;
+        public BenchResult BenchGpu, BenchCpu;   // speech speed test (null = not run)
+        public List<string> BenchLines;          // its result, as shown to the player
         public string Launch;
         public int Steps;
     }
@@ -93,6 +97,7 @@ static partial class Fixer
         s.CpuState = s.HasAvx ? GetCpuFixState(gameDir, s.HasAvx2) : CpuFixState.NotNeeded;
 
         string dllHash = File.Exists(s.Dll) ? Sha256(s.Dll) : null;
+        s.DllHash = dllHash;
         s.SpeedInstalled = ModelsConverted(s.ModelDir) || IsDllPatched(dllHash);
         s.SpeedTodo = IsDllOriginal(dllHash);
         foreach (string n in ModelNames)
@@ -113,6 +118,8 @@ static partial class Fixer
         s.CallLanguage = ReadCallLanguage();
         s.Provider = ReadSpeechProvider();
         s.AmdNvidia = IsAmdPlusNvidia(GraphicsCardIds());
+        s.RamMb = TotalRamMb();
+        s.BigFile = FindBigModelFile();
         if (s.Asm.Known || s.SadHash == SadOriginal || s.SadHash == SadPatched) s.GameBuild = "0.1.74";
         else
         {
@@ -127,11 +134,16 @@ static partial class Fixer
         s.Qwen = new Item { Key = "qwen", Experimental = true, Untested = true };
         s.Keep = new Item { Key = "keep", Untested = true };
         s.Gpu = new Item { Key = "gpu", IsTest = true };
-        s.Items = new[] { s.Cpu, s.Speed, s.Voice, s.Qwen, s.Keep, s.Gpu };
+        s.Big = new Item { Key = "big", Experimental = true, Untested = true };
+        s.Bench = new Item { Key = "bench", IsTest = true, Experimental = true };
+        // Order = the order steps run in: the speed-up before the bigger model, the speed test last.
+        s.Items = new[] { s.Cpu, s.Speed, s.Voice, s.Qwen, s.Keep, s.Big, s.Gpu, s.Bench };
         Describe(s);
 
         foreach (Item it in s.Items) it.Wanted = it.Available;      // recommended: everything that applies
         s.Qwen.Wanted = s.Qwen.Installed;                             // experimental: only when the player ticks it
+        s.Big.Wanted = s.Big.Installed;
+        s.Bench.Wanted = false;
         s.Keep.Wanted = s.Keep.Installed || (s.Keep.Available && s.CpuSpeech && s.StrongCpu);
         s.Cpu.Recommended = s.Cpu.Available && !s.Cpu.Installed;
         s.Speed.Recommended = s.Speed.Available && s.SpeedTodo;
@@ -223,6 +235,12 @@ static partial class Fixer
             : s.CpuSpeech ? T("core.not_installed_more_accurate_english")
             : T("core.not_needed_now_only_matters");
 
+        DescribeBig(s);
+        Item bench = s.Bench;
+        bench.Name = T("bench.name");
+        bench.Available = s.HasAvx2 && File.Exists(Path.Combine(s.ModelDir, BenchModelName(s)));
+        bench.Status = bench.Available ? T("bench.status", LanguageLabel(s.CallLanguage ?? "en")) : T("bench.status_unavailable");
+
         gpu.Name = T("core.graphics_card_speech_test");
         gpu.Installed = false;
         gpu.Available = hasAvx;
@@ -245,6 +263,7 @@ static partial class Fixer
         DisableOldBepInEx(gameDir);
         if (s.CpuState == CpuFixState.FixedByDevelopers) CleanUpAfterDeveloperFix(gameDir);
         if (s.OwnFixes) CleanUpAfterGameUpdate(gameDir, s.Dll);
+        if (!IsBigModel(BigTarget(s.ModelDir))) TryDelete(BigTarget(s.ModelDir) + BigBackupSuffix);
         r.Launch = ReadLaunchOptions();
         r.HasCpuOption = HasCpuOption(r.Launch);
         r.Reason = CpuAdvice(s);
@@ -254,7 +273,7 @@ static partial class Fixer
         {
             if (!StepWanted(it, onlyChanges)) continue;
             step++;
-            if (Sink == null) Header(step, r.Steps, it.IsTest ? it.Name + (" " + T("core.takes_few_seconds")) : it.Name);
+            if (Sink == null) Header(step, r.Steps, it.IsTest ? it.Name + " " + T(it.Key == "bench" ? "bench.takes_minutes" : "core.takes_few_seconds") : it.Name);
             else Line("[" + step + "/" + r.Steps + "] " + it.Name);
             if (OnStepBegin != null) OnStepBegin(it);
             bool ok = RunStep(s, it, r);
@@ -287,11 +306,15 @@ static partial class Fixer
         return CpuOptionHelps(s);
     }
 
-    static string CpuReasonText(CpuReason why, Session s)
+    static string CpuReasonText(CpuReason why, Session s, ApplyResult r)
     {
         switch (why)
         {
             case CpuReason.GpuTest: return T("ui.launch_why");
+            case CpuReason.Bench:
+                return r != null && r.BenchGpu != null && r.BenchGpu.Outcome == BenchOutcome.Ok && r.BenchCpu != null
+                    ? T("ui.launch_why_bench", Secs(r.BenchGpu.RunMs), Secs(r.BenchCpu.RunMs))
+                    : T("ui.launch_why_bench_froze");
             case CpuReason.AmdNvidia: return T("ui.launch_why_amd_nvidia");
             case CpuReason.Language:
                 return T("ui.launch_why_language") + (s.OwnFixes && IsMoonshineLanguage(s.CallLanguage) ? " " + T("ui.launch_or_moonshine") : "");
@@ -332,8 +355,13 @@ static partial class Fixer
             case "keep":
                 if (it.Wanted) { InstallWhisperKeep(gameDir); return true; }
                 return UninstallWhisperKeep(gameDir) == 0;
+            case "big":
+                if (it.Wanted) { InstallBigModel(s); return IsBigModel(BigTarget(s.ModelDir)); }
+                return UninstallBigModel(s.ModelDir) == 0;
             case "gpu":
                 return RunGpuTest(s, r);
+            case "bench":
+                return RunBenchStep(s, r);
         }
         return true;
     }

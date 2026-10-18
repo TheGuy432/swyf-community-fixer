@@ -91,3 +91,38 @@ jobs:
             if ($a -ne $b) { throw "Conversion of $m differs from whisper.cpp's official tool" }
           }
           "Model conversion is byte-identical to whisper.cpp's official quantize tool." | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      # The bigger speech model offered (experimental) for languages other than English: OpenAI's Whisper "small" in
+      # whisper.cpp format, converted to 8-bit with the fixer's own converter and checked against the official tool.
+      - name: Build the bigger speech model (Whisper small, 8-bit)
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" -OutFile ggml-small.bin
+          $sha1 = (Get-FileHash ggml-small.bin -Algorithm SHA1).Hash.ToLower()
+          "ggml-small.bin SHA-1 $sha1"
+          if ($sha1 -ne "55356645c2b361a969dfd0ef2c5a50d530afd8d5") { throw "ggml-small.bin is not the official file (SHA-1 $sha1)" }
+          $quantize = (Get-ChildItem wbuild -Recurse -Filter quantize.exe | Select-Object -First 1).FullName
+          & $quantize ggml-small.bin official-small-q8.bin q8_0 | Out-Null
+          New-Item -ItemType Directory model | Out-Null
+          $p = Start-Process -FilePath dist\SWYF-Speech-Fixer.exe -ArgumentList "--convert","ggml-small.bin","model\SWYF-Speech-Model-small-q8.bin" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Conversion of ggml-small.bin failed (exit $($p.ExitCode))" }
+          $a = (Get-FileHash official-small-q8.bin).Hash.ToLower()
+          $b = (Get-FileHash model\SWYF-Speech-Model-small-q8.bin).Hash.ToLower()
+          "small  official=$a  ours=$b"
+          if ($a -ne $b) { throw "Conversion of ggml-small.bin differs from whisper.cpp's official tool" }
+          Copy-Item WHISPER-MODEL-LICENSE.txt model\
+          "$b  SWYF-Speech-Model-small-q8.bin" | Out-File -Encoding ascii model\SHA256SUMS-model.txt
+          "### SWYF-Speech-Model-small-q8.bin SHA-256`n`n``$b```n`nIdentical to whisper.cpp's official quantize output of ggml-small.bin (SHA-1 55356645c2b361a969dfd0ef2c5a50d530afd8d5)." | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SWYF-Speech-Model
+          path: model/
+
+      - name: Attach the speech model to the release
+        if: github.event_name == 'release'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" model\SWYF-Speech-Model-small-q8.bin model\SHA256SUMS-model.txt model\WHISPER-MODEL-LICENSE.txt --clobber

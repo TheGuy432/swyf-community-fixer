@@ -503,6 +503,9 @@ static partial class Fixer
             t.Tick += delegate
             {
                 t.Stop();
+                string tick = TestValue("--test-tick=");
+                if (tick != null && session != null)
+                    foreach (string k in tick.Split(',')) foreach (Item it in session.Items) if (it.Key == k && it.Available) it.Wanted = true;
                 if (click == "apply" && session != null) StartApply(false);
                 else if (click == "undo" && session != null) ShowUndoConfirm();
                 else if (click == "undo-yes" && session != null) StartApply(true);
@@ -715,6 +718,7 @@ static partial class Fixer
 
             var exp = new List<Item>();
             foreach (Item it in session.Items) if (it.Experimental && it.Available) exp.Add(it);
+            foreach (Item it in session.Items) if (it.Experimental && !it.Available && it.ShowAlways) exp.Add(it);
             if (exp.Count > 0) y = RowsCard(exp, y, Ui.WarnSoft, Ui.WarnLine, "⚠  " + T("ui.experimental")) + Ui.S(12);
 
             bool anyUntested = false;
@@ -987,6 +991,8 @@ static partial class Fixer
                     : StatusCard(y, Ui.AccentSoft, Ui.AccentLine, StepState.Done, Ui.Accent, title, T("ui.done_text"));
                 if (result != null && result.Reason != CpuReason.None && !result.HasCpuOption) y = LaunchOptionCard(y + Ui.S(14));
                 else if (result != null && result.GpuProblem) y = InfoCard(y + Ui.S(14), T("ui.cpu_option_already"), LayerNote());
+                if (result != null && result.BenchLines != null && result.BenchLines.Count > 0)
+                    y = InfoCard(y + Ui.S(14), T("ui.bench_title"), string.Join("\n", result.BenchLines.ToArray()));
                 if (result != null && result.Probe != null && result.Probe.Outcome == ProbeOutcome.LoadFailed)
                     y = InfoCard(y + Ui.S(14), T("ui.loadfail_title"), T("ui.loadfail_text", result.Probe.Detail));
                 y = TipsCard(y + Ui.S(14));
@@ -1028,9 +1034,9 @@ static partial class Fixer
             int cy = Ui.S(14);
             cy = Text_(c, T("ui.one_more_step").ToUpperInvariant(), 20, cy, 600, 11.5f, FontStyle.Bold, Ui.Warn) + Ui.S(2);
             string title = result.Reason == CpuReason.GpuTest ? T("ui.launch_title")
-                : result.Reason == CpuReason.Language ? T("ui.launch_title_language") : T("ui.launch_title_speech");
+                : result.Reason == CpuReason.Language || result.Reason == CpuReason.Bench ? T("ui.launch_title_language") : T("ui.launch_title_speech");
             cy = Text_(c, title, 20, cy, 680, 16, FontStyle.Bold, Ui.Ink);
-            cy = Text_(c, CpuReasonText(result.Reason, session), 20, cy + Ui.S(2), 680, 13, FontStyle.Regular, Ui.Muted) + Ui.S(10);
+            cy = Text_(c, CpuReasonText(result.Reason, session, result), 20, cy + Ui.S(2), 680, 13, FontStyle.Regular, Ui.Muted) + Ui.S(10);
             string[] steps = { T("ui.launch_step1"), T("ui.launch_step2"), T("ui.launch_step3") };
             for (int i = 0; i < steps.Length; i++)
             {

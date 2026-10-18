@@ -45,6 +45,7 @@ static partial class Fixer
         foreach (string n in ModelNames)
         {
             string p = Path.Combine(dir, n), bak = p + BackupSuffix;
+            if (IsBigModel(p)) { Line("  " + T("big.speedup_keeps_big")); continue; }   // the bigger model has its own undo
             if (!File.Exists(bak)) { if (File.Exists(p) && ReadFtype(p) == FtypeQ8) ok = false; continue; }
             if (File.Exists(p) && ReadFtype(p) != FtypeQ8)
             {
