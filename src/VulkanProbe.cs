@@ -1,6 +1,8 @@
 ﻿// Vulkan speech test: a child process loads the game's own ggml.dll (the developer's build, which loads
 // ggml-vulkan.dll unless KOLKATA_WHISPER_CPU_ONLY=1), enumerates devices and initializes each GPU device -
 // the same steps the game takes when speech starts. If that crashes or hangs, only the child dies.
+// After a crash or freeze it runs once more with the Vulkan implicit layers switched off, to see if one of them
+// (an overlay, a recorder, AMD switchable graphics) is the cause.
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -67,6 +69,13 @@ static partial class Fixer
 #if SWYF_TEST
         if (simulate == "crash") { Console.WriteLine("STAGE registry"); Console.Out.Flush(); Environment.FailFast("simulated crash"); }
         if (simulate == "hang") { Console.WriteLine("STAGE registry"); Console.Out.Flush(); System.Threading.Thread.Sleep(-1); }
+        if (simulate == "pass") { Console.WriteLine("STAGE registry"); Console.WriteLine("GPUOK Test GPU"); return 0; }
+        if (simulate == "layerhang")   // freezes unless the implicit layers are switched off
+        {
+            Console.WriteLine("STAGE registry"); Console.Out.Flush();
+            if (Environment.GetEnvironmentVariable("VK_LOADER_LAYERS_DISABLE") == null) System.Threading.Thread.Sleep(-1);
+            Console.WriteLine("GPUOK Test GPU"); return 0;
+        }
 #endif
         if (!IsUnix) SetDllDirectoryW(pluginDir);
         IntPtr b = LoadLib(pluginDir, "ggml-base.dll", "libggml-base.so");
@@ -104,7 +113,10 @@ static partial class Fixer
         return gpuOk ? 0 : 2;
     }
 
-    static ProbeResult RunVulkanProbe(string gameDir, string simulate)
+    // noLayers: run with the Vulkan loader's implicit layers switched off (overlays, recorders, AMD switchable
+    // graphics). Only the test process gets these variables; nothing on the PC changes.
+    static ProbeResult RunVulkanProbe(string gameDir, string simulate) { return RunVulkanProbe(gameDir, simulate, false); }
+    static ProbeResult RunVulkanProbe(string gameDir, string simulate, bool noLayers)
     {
         var r = new ProbeResult();
         string pluginDir = Path.Combine(gameDir, PluginRel);
@@ -124,6 +136,11 @@ static partial class Fixer
         if (IsUnix) { psi.FileName = "mono"; psi.Arguments = "\"" + self + "\" " + args; }
         else { psi.FileName = self; psi.Arguments = args; }
         psi.EnvironmentVariables.Remove("KOLKATA_WHISPER_CPU_ONLY");
+        if (noLayers)
+        {
+            psi.EnvironmentVariables["VK_LOADER_LAYERS_DISABLE"] = "~implicit~";            // Vulkan loader 1.3.234+
+            psi.EnvironmentVariables["DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1"] = "1";    // AMD's own off switch
+        }
 
         var output = new StringBuilder();
         using (var p = new Process { StartInfo = psi })

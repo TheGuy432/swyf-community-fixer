@@ -985,8 +985,8 @@ static partial class Fixer
                 y = anyWarn
                     ? StatusCard(y, Ui.WarnSoft, Ui.WarnLine, StepState.Warn, Ui.Warn, T("ui.done_warn_title"), T("ui.done_warn_text"))
                     : StatusCard(y, Ui.AccentSoft, Ui.AccentLine, StepState.Done, Ui.Accent, title, T("ui.done_text"));
-                if (result != null && result.GpuProblem && !result.HasCpuOption) y = LaunchOptionCard(y + Ui.S(14));
-                else if (result != null && result.GpuProblem) y = InfoCard(y + Ui.S(14), T("ui.cpu_option_already"), null);
+                if (result != null && result.Reason != CpuReason.None && !result.HasCpuOption) y = LaunchOptionCard(y + Ui.S(14));
+                else if (result != null && result.GpuProblem) y = InfoCard(y + Ui.S(14), T("ui.cpu_option_already"), LayerNote());
                 if (result != null && result.Probe != null && result.Probe.Outcome == ProbeOutcome.LoadFailed)
                     y = InfoCard(y + Ui.S(14), T("ui.loadfail_title"), T("ui.loadfail_text", result.Probe.Detail));
                 y = TipsCard(y + Ui.S(14));
@@ -1027,8 +1027,10 @@ static partial class Fixer
             var c = new Card { Left = Ui.S(20), Top = y, Width = Ui.S(720), Fill = Ui.WarnSoft, Stripe = Ui.WarnLine };
             int cy = Ui.S(14);
             cy = Text_(c, T("ui.one_more_step").ToUpperInvariant(), 20, cy, 600, 11.5f, FontStyle.Bold, Ui.Warn) + Ui.S(2);
-            cy = Text_(c, T("ui.launch_title"), 20, cy, 680, 16, FontStyle.Bold, Ui.Ink);
-            cy = Text_(c, T("ui.launch_why"), 20, cy + Ui.S(2), 680, 13, FontStyle.Regular, Ui.Muted) + Ui.S(10);
+            string title = result.Reason == CpuReason.GpuTest ? T("ui.launch_title")
+                : result.Reason == CpuReason.Language ? T("ui.launch_title_language") : T("ui.launch_title_speech");
+            cy = Text_(c, title, 20, cy, 680, 16, FontStyle.Bold, Ui.Ink);
+            cy = Text_(c, CpuReasonText(result.Reason, session), 20, cy + Ui.S(2), 680, 13, FontStyle.Regular, Ui.Muted) + Ui.S(10);
             string[] steps = { T("ui.launch_step1"), T("ui.launch_step2"), T("ui.launch_step3") };
             for (int i = 0; i < steps.Length; i++)
             {
@@ -1054,9 +1056,20 @@ static partial class Fixer
                 }
             }
             if (result.KeepHint) cy = Text_(c, T("ui.keep_hint"), 20, cy + Ui.S(2), 680, 13, FontStyle.Regular, Ui.Muted) + Ui.S(4);
+            string layers = LayerNote();
+            if (layers != null) cy = Text_(c, layers, 20, cy + Ui.S(2), 680, 12.5f, FontStyle.Regular, Ui.Muted) + Ui.S(4);
             c.Height = cy + Ui.S(8);
             content.Controls.Add(c);
             return c.Bottom;
+        }
+
+        // After a failed graphics card test: what the second test without Vulkan add-on layers showed. null = no retest.
+        string LayerNote()
+        {
+            if (result == null || result.ProbeNoLayers == null) return null;
+            string n = result.ProbeNoLayers.Outcome == ProbeOutcome.Passed ? T("ui.retest_passed") : T("ui.retest_failed");
+            if (result.Layers != null && result.Layers.Count > 0) n += " " + T("core.layers_on_pc", string.Join(", ", result.Layers.ToArray()));
+            return n;
         }
 
         int TipsCard(int y)
@@ -1064,7 +1077,7 @@ static partial class Fixer
             string intro;
             List<string> tips = Tips(session, result, out intro);
             if (result != null && result.Probe != null && result.Probe.Outcome == ProbeOutcome.Passed && result.HasCpuOption)
-                tips.Insert(0, T("ui.tip_remove_cpu_option"));
+                tips.Insert(0, CpuOptionHelps(session) == CpuReason.None ? T("ui.tip_remove_cpu_option") : T("ui.tip_keep_cpu_option"));
             var c = new Card { Left = Ui.S(20), Top = y, Width = Ui.S(720) };
             int cy = Ui.S(14);
             cy = Text_(c, T("ui.tips_title").ToUpperInvariant(), 20, cy, 600, 11.5f, FontStyle.Bold, Ui.Muted) + Ui.S(4);

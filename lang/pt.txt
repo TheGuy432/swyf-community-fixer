@@ -1,4 +1,4 @@
-# SWYF Speech Fixer - Português (Brasil)
+﻿# SWYF Speech Fixer - Português (Brasil)
 # Format: key = text. "\n" is a line break, {0} {1} are filled in by the program. Keep them.
 # Missing lines fall back to English, so partial translations work.
 _name = Português (Brasil)
@@ -125,7 +125,7 @@ main.2_right_click_scam_with = 2. Clique com o botão direito em 'Scam With Your
 main.3_on_general_tab_find = 3. Na aba Geral, em 'Opções de inicialização', digite:   -whisper-cpu
 main.you_already_have_there_keep = (Você já tem "{0}" lá - mantenha e adicione -whisper-cpu depois de um espaço.)
 main.4_close_properties_window = 4. Feche a janela de Propriedades.
-main.this_makes_speech_use_processor = Isso faz a voz usar o processador em vez da placa de vídeo, então o jogo não vai travar.
+main.this_makes_speech_use_processor = Isso faz a voz usar o processador em vez da placa de vídeo.
 main.press_enter_when_you_have = Aperte Enter quando terminar...
 main.yes = sim
 main.no = NÃO
@@ -175,7 +175,7 @@ core.you_already_have_launch_option = Você já tem a opção de inicialização
 core.your_pc_is_on_slower = Seu PC é mais fraco para este jogo, então:
 core.banditcam_watermark_already_off_good = Marca d'água do BanditCam: já está DESLIGADA. Ótimo.
 core.turn_off_banditcam_watermark_open = DESLIGUE a MARCA D'ÁGUA do BanditCam: abra o app BanditCam no computador dentro do jogo e clique na opção da marca d'água. Depois de cada ligação o jogo recodifica a gravação para colocar a marca d'água, e isso deixa a voz lenta justo quando a próxima ligação começa.
-core.turn_on_vsync_or_cap = Limite o FPS: numa partida aperte Esc > Configurações e ligue o VSync ou ajuste o MAX FPS (o jogo roda sem limite por padrão).
+core.turn_on_vsync_or_cap = Limite o FPS: numa partida aperte Esc > Configurações e ligue o VSync ou ajuste o MAX FPS.
 core.speak_after_caller_has_finished = Fale depois que a pessoa na ligação terminar, e espere alguns segundos.
 core.speak_after_caller_has_finished_2 = Fale depois que a pessoa na ligação terminar de falar.
 core.your_cpu_can_t_run_2 = Sua CPU não roda o reconhecimento de voz do jogo, mas você pode digitar para quem liga.
@@ -237,3 +237,21 @@ voice.cards_skipped = Números de cartão e frases de espera: PULADO (sua versã
 voice.cards_already = Números de cartão e frases de espera: já corrigidos.
 voice.fixing_cards = Corrigindo números de cartão lentos e frases de espera que se arrastam ...
 voice.report_note = Ainda não testado no jogo. Se as vozes soarem erradas, desmarque isto e avise o Tiger (Discord: tigerlundberg).
+
+# ---- v4.5: game build 26020526, -whisper-cpu advice, Vulkan retest ----
+ui.launch_title_speech = Adicione uma opção de inicialização na Steam para o jogo ouvir você
+ui.launch_title_language = Adicione uma opção de inicialização na Steam para o reconhecimento de voz ficar mais rápido
+ui.launch_why_amd_nvidia = Seu PC tem gráficos AMD no processador e uma placa NVIDIA. Nesses PCs o reconhecimento de voz do jogo muitas vezes nunca termina de carregar na placa de vídeo, e os clientes não ouvem você. Esta opção faz a voz usar o processador.
+ui.launch_why_language = Você joga em um idioma que não é inglês. Esse modelo de voz é muito lento na placa de vídeo (muitas vezes 15-30 segundos por frase), e o cliente segue em frente antes de terminar. Esta opção roda ele no processador, que normalmente leva poucos segundos.
+ui.launch_or_moonshine = Para o seu idioma você também pode testar no jogo: Esc > Configurações > Reconhecimento de voz > Moonshine (6 languages).
+ui.tip_keep_cpu_option = Mantenha -whisper-cpu nas opções de inicialização. O teste da placa de vídeo passou, mas neste PC a voz funciona melhor no processador.
+ui.retest_passed = Um segundo teste com as camadas extras do Vulkan desligadas passou, então uma delas pode ser a causa.
+ui.retest_failed = Um segundo teste com as camadas extras do Vulkan desligadas também falhou.
+core.retest_without_layers = Testando de novo com as camadas extras do Vulkan desligadas...
+core.retest_passed = passou (uma camada extra pode ser a causa).
+core.retest_failed = também falhou.
+core.layers_on_pc = Camadas extras do Vulkan neste PC: {0}.
+core.keep_whisper_cpu = Mantenha -whisper-cpu nas opções de inicialização: neste PC a voz funciona melhor no processador.
+core.fixed_in_game = não precisa - o próprio jogo corrigiu isso na atualização de 18 de outubro
+core.removed_old_backups = Backups antigos da versão anterior do jogo removidos.
+core.tip_moonshine = Seu idioma também pode usar o novo reconhecimento de voz Moonshine do jogo: Esc > Configurações > Reconhecimento de voz > Moonshine (6 languages). Ele roda no processador. Se entender você pior, volte para Automático.

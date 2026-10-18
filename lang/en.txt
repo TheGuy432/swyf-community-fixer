@@ -1,4 +1,4 @@
-# SWYF Speech Fixer - English
+﻿# SWYF Speech Fixer - English
 # Format: key = text. "\n" is a line break, {0} {1} are filled in by the program. Keep them.
 # Missing lines fall back to English, so partial translations work.
 _name = English
@@ -124,7 +124,7 @@ main.2_right_click_scam_with = 2. Right-click 'Scam With Your Friends' > Propert
 main.3_on_general_tab_find = 3. On the General tab, find 'Launch Options' and type:   -whisper-cpu
 main.you_already_have_there_keep = (You already have "{0}" there - keep it and add -whisper-cpu after a space.)
 main.4_close_properties_window = 4. Close the Properties window.
-main.this_makes_speech_use_processor = This makes speech use the processor instead of the graphics card, so the game won't crash.
+main.this_makes_speech_use_processor = This makes speech use the processor instead of the graphics card.
 main.press_enter_when_you_have = Press Enter when you have done this...
 main.yes = yes
 main.no = NO
@@ -174,7 +174,7 @@ core.you_already_have_launch_option = You already have the launch option -whispe
 core.your_pc_is_on_slower = Your PC is on the slower side for this game, so:
 core.banditcam_watermark_already_off_good = BanditCam watermark: already OFF. Good.
 core.turn_off_banditcam_watermark_open = Turn OFF the BanditCam WATERMARK: open the BanditCam app on the in-game computer and click the watermark toggle. After every call the game re-encodes the recording to add the watermark, and that slows down speech recognition right when the next call starts.
-core.turn_on_vsync_or_cap = Cap your FPS: in a game press Esc > Settings, then turn on VSync or set MAX FPS (the game runs uncapped by default).
+core.turn_on_vsync_or_cap = Cap your FPS: in a game press Esc > Settings, then turn on VSync or set MAX FPS.
 core.speak_after_caller_has_finished = Speak after the caller has finished, then give it a few seconds.
 core.speak_after_caller_has_finished_2 = Speak after the caller has finished talking.
 core.your_cpu_can_t_run_2 = Your CPU can't run the game's speech recognition, but you can type to the callers.
@@ -236,3 +236,21 @@ voice.cards_skipped = Card numbers and filler lines: SKIPPED (your game version 
 voice.cards_already = Card numbers and filler lines: already fixed.
 voice.fixing_cards = Fixing slow card numbers and rambling filler lines ...
 voice.report_note = Not tested in the game yet. If callers sound wrong, untick this and report it to Tiger (Discord: tigerlundberg).
+
+# ---- v4.5: game build 26020526, -whisper-cpu advice, Vulkan retest ----
+ui.launch_title_speech = Add a Steam launch option so the game can hear you
+ui.launch_title_language = Add a Steam launch option for faster speech recognition
+ui.launch_why_amd_nvidia = Your PC has AMD graphics built into the processor plus an NVIDIA card. On these PCs the game's speech engine often never finishes loading on the graphics card, so callers can't hear you. This option makes speech use your processor instead.
+ui.launch_why_language = You play in a language other than English. That speech model is very slow on the graphics card (often 15-30 seconds per sentence), so callers move on before it's done. This option runs it on your processor instead, which usually takes a few seconds.
+ui.launch_or_moonshine = For your language you can also try, in the game: Esc > Settings > Speech recognition > Moonshine (6 languages).
+ui.tip_keep_cpu_option = Keep -whisper-cpu in your launch options. The graphics card test passed, but on this PC speech works better on the processor.
+ui.retest_passed = A second test with Vulkan add-on layers turned off passed, so one of them may be behind the problem.
+ui.retest_failed = A second test with Vulkan add-on layers turned off failed too.
+core.retest_without_layers = Testing again with Vulkan add-on layers turned off...
+core.retest_passed = passed (an add-on layer may be the cause).
+core.retest_failed = failed too.
+core.layers_on_pc = Vulkan add-on layers on this PC: {0}.
+core.keep_whisper_cpu = Keep -whisper-cpu in your launch options: on this PC speech works better on the processor.
+core.fixed_in_game = not needed - the game fixed this itself in the 18 Oct update
+core.removed_old_backups = Removed leftover backups of the previous game version.
+core.tip_moonshine = Your language can also use the game's new Moonshine speech recognition: Esc > Settings > Speech recognition > Moonshine (6 languages). It runs on the processor. If it understands you worse, switch back to Automatic.

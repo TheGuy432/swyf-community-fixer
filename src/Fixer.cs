@@ -1,12 +1,14 @@
-﻿// SWYF Speech Fixer v4.4 (UNOFFICIAL) - for Scam With Your Friends
+﻿// SWYF Speech Fixer v4.5 (UNOFFICIAL) - for Scam With Your Friends
 // One tool for the community fixes. Double-click: a window to pick fixes (Gui.cs). --console: the same in text mode.
 //   1. Old CPU fix (CPUs without AVX2, game build 0.1.71)
-//   2. Speech speed-up (8-bit speech model + listening window sized to the phrase)
-//   3. Caller voice fix (Portuguese callers cut off after ~0.3 s, game 0.1.74)
-//   4. EXPERIMENTAL: Qwen3 TTS on 8 GB graphics cards
-//   5. Better English speech recognition (Whisper instead of Moonshine on CPU speech, game 0.1.74)
-//   6. Vulkan speech test - tells the player to add -whisper-cpu if their graphics card crashes it
-//   then advice for lower-end PCs (BanditCam watermark, FPS cap).
+//   2. Speech speed-up (8-bit speech model + listening window sized to the phrase; 0.1.69 - 0.1.74 and the
+//      18 Oct 2026 update, Steam build 26020526)
+//   3. Caller voice fix (Portuguese callers cut off after ~0.3 s, game 0.1.74; built into the game since 26020526)
+//   4. EXPERIMENTAL: Qwen3 TTS on 8 GB graphics cards (0.1.74; built into the game since 26020526)
+//   5. Better English speech recognition (Whisper instead of Moonshine on CPU speech, 0.1.74; built in since 26020526)
+//   6. Vulkan speech test - tells the player to add -whisper-cpu if their graphics card crashes it, and retests
+//      without Vulkan add-on layers to narrow down why
+//   then -whisper-cpu advice (AMD + NVIDIA PCs, languages other than English) and tips for lower-end PCs.
 // Texts come from lang/<code>.txt (embedded). Run again to change the selection or to undo everything.
 using System;
 using System.Collections.Generic;
@@ -19,7 +21,7 @@ using System.Text.RegularExpressions;
 
 static partial class Fixer
 {
-    const string Version = "4.4.0";
+    const string Version = "4.5.0";
     const string AppId = "4954910";
     const string GameFolderName = "Scam With Your Friends";
     const string GameExe = "Scam With Your Friends.exe";
@@ -64,6 +66,10 @@ static partial class Fixer
             if (a.StartsWith("--assume-gpu=")) { assumeGpu = a.Substring(13); continue; }
             if (a.StartsWith("--assume-threads=")) { assumeThreads = int.Parse(a.Substring(17)); continue; }
             if (a.StartsWith("--assume-pc=")) { assumePc = a.Substring(12); continue; }
+            if (a.StartsWith("--assume-build=")) { assumeBuild = a.Substring(15); continue; }
+            if (a.StartsWith("--assume-lang=")) { assumeLanguage = a.Substring(14); continue; }
+            if (a.StartsWith("--assume-provider=")) { assumeProvider = a.Substring(18); continue; }
+            if (a.StartsWith("--assume-layers=")) { assumeLayers = a.Substring(16); continue; }
             if (a.StartsWith("--test-")) { guiTest.Add(a); continue; }
 #endif
             if (a.StartsWith("--lang=")) lang = a.Substring(7).ToLowerInvariant();
@@ -211,10 +217,10 @@ static partial class Fixer
 
         // ---- Apply ----
         ApplyResult r = Apply(s, false);
-        if (r.GpuProblem)
+        if (r.Reason != CpuReason.None && !r.HasCpuOption)
         {
             Line("");
-            if (!r.HasCpuOption) LaunchOptionPrompt(r.Launch);
+            LaunchOptionPrompt(r.Launch, CpuReasonText(r.Reason, s));
             if (r.KeepHint)
             {
                 Wrapped("  ", T("main.with_whisper_cpu_english_speech"));
@@ -276,8 +282,8 @@ static partial class Fixer
             }
         }
         string h = File.Exists(dll) ? Sha256(dll) : null;
-        if (h == DllOriginal) { Out("  " + (T("main.shorter_listening_window") + " ")); PatchDll(dll); Line(T("main.done")); }
-        else if (h == DllPatched) Line(("  " + T("main.shorter_listening_window_already_installed")));
+        if (IsDllOriginal(h)) { Out("  " + (T("main.shorter_listening_window") + " ")); PatchDll(dll); Line(T("main.done")); }
+        else if (IsDllPatched(h)) Line(("  " + T("main.shorter_listening_window_already_installed")));
         else Line(("  " + T("main.shorter_listening_window_skipped_your")));
     }
 
@@ -311,11 +317,12 @@ static partial class Fixer
         return ok ? 0 : 1;
     }
 
-    static void LaunchOptionPrompt(string current)
+    static void LaunchOptionPrompt(string current, string why)
     {
         Line("  ##############################################################");
         Line(("  " + T("main.action_needed_add_steam_launch")));
         Line("  ##############################################################");
+        if (!string.IsNullOrEmpty(why)) { Wrapped("  ", why); Line(""); }
         Line(("  " + T("main.1_open_steam_library")));
         Line(("  " + T("main.2_right_click_scam_with")));
         Line(("  " + T("main.3_on_general_tab_find")));

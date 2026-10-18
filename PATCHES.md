@@ -3,6 +3,21 @@
 Every change is gated on the SHA-256 of the file being changed, and verified again after writing.
 If a file doesn't match the known version, that step is skipped and the file is left alone.
 
+## Game build 26020526 (18 Oct 2026 update)
+
+This update includes the developers' own fixes for 3a–3d (caller voices), 4 (Qwen3 limits: 7680 MB / 15000 MB) and 5
+(English keeps Whisper on CPU speech). On this build those options show as *fixed in the game* and the tool doesn't touch
+`PocketTTS.dll`, `Assembly-CSharp.dll` or `ScriptsAssDef.dll` at all. It recognises the build by the Steam build id in
+`steamapps\appmanifest_4954910.acf` (26020526 or newer) or by these SHA-256 hashes:
+`PocketTTS.dll` `37b76e8b372460e5eb6372022ea4277a459289b38f2ef04fe97573f9c35d2e95`,
+`Assembly-CSharp.dll` `0edee3f51411f069a876be2f24e4b4acc41e1a08fe6d01c3a0a00f872f6007a7`,
+`ScriptsAssDef.dll` `75cc108ace20b54d29579e739fbc20ee6a3381a61f2de10afe5c85f772308d22`.
+A file that is still a 0.1.74 file (patched or not) always wins over the build id.
+
+The listening window (2b) is not in the update, so the tool still offers it (new hashes below). Leftover backups of the
+0.1.74 files (`.whisperkeep-backup`, the old `com.whisper.unity.dll.speedup-backup`) are deleted, since nothing can restore
+them any more. The 8-bit models (2a) are unchanged by the update and stay installed.
+
 ## 1. Old CPU fix (`ScriptsAssDef.dll` + `ggml-cpu.dll`), game build 0.1.71
 
 **Problem.** Since 0.1.71 the game ships an AVX-only speech backend (`Plugins\x86_64\avx\ggml-cpu.dll`) for CPUs without AVX2.
@@ -52,6 +67,8 @@ param.audio_ctx = ctx;
 - Two log calls that only fed the plugin's internal (disabled) logger were removed to make room.
 - The `whisper_full` call and the error handling are the original bytes, unchanged.
 - Unused space is padded with `nop`. Result SHA-256 `fb2ebfbe63008e3953776d11ce24a6bb0a99d5d1c73862fb4a3f4ccd8352fdc7`.
+- Build 26020526 ships a rebuilt `com.whisper.unity.dll` (SHA-256 `3912ce1585fe33097c1a597c951bd9d28d89e35aee96b21bc80f94e97f26cab4`)
+  with the same method body at the same offset; the same patch gives `6e815e529e3a8f9580982ad8cceb66674695b00dd115c9ea8b066042849c2be1`.
 - Measured: encoder for a 1.1 s clip went from 8.8 s to 1.4–1.6 s on an AVX-only build.
   In-game on an i5-2500, a 2.1 s phrase was transcribed in 4.1 s, against about 15 s before.
 
@@ -133,6 +150,20 @@ The tool starts itself again as a child process (`--vulkan-probe`).
 - It then calls `ggml_backend_dev_init()` and `ggml_backend_free()` for each GPU device.
 - If the child crashes, or doesn't finish within 30 s, the tool tells the player to add the Steam launch option `-whisper-cpu`.
   The game itself already supports that option.
+- After a crash or freeze it runs the child once more with `VK_LOADER_LAYERS_DISABLE=~implicit~` (Vulkan loader 1.3.234+) and
+  `DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1=1`, set only for that child process, and lists the Vulkan implicit layers registered
+  on the PC (`HKLM`/`HKCU\SOFTWARE\Khronos\Vulkan\ImplicitLayers` and the display drivers' `VulkanImplicitLayers`). If the
+  second run passes, an overlay, recorder or AMD's switchable-graphics layer is a likely cause. This is only reported; the
+  advice stays `-whisper-cpu`.
+
+**More `-whisper-cpu` advice** (also no files changed). Even when the test passes, the tool asks for `-whisper-cpu` when:
+- the PC has AMD processor graphics (vendor `1002`) plus an NVIDIA card (`10de`): on every such PC we've seen, the game's
+  speech engine starts loading on the graphics card and never finishes;
+- the game's call language (PlayerPrefs `Kolkata.CallLanguage`) isn't English: the multilingual model took 14–35 s per sentence
+  on the graphics card on several PCs, against a few seconds on the processor. Not when the player picked Deepgram, or Moonshine
+  for a language it covers (en, de, es, ar, ja, zh; PlayerPrefs `SpeechRecognition.Provider`).
+
+It doesn't suggest removing `-whisper-cpu` on those PCs.
 
 It reads `Steam\userdata\*\config\localconfig.vdf` to see whether `-whisper-cpu` is already set. It never writes to it.
 

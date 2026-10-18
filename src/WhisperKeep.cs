@@ -23,15 +23,17 @@ static partial class Fixer
     const string WhisperKeepBackupSuffix = ".whisperkeep-backup";
     const int KeepCpuCompatAt = 0x119ECD, KeepCpuEnvAt = 0x119ECF;   // ldarg.2 (04), ldarg.3 (05) -> ldc.i4.0 (16)
 
-    static string assumeGpu;   // test builds only: "10de:2803"
+    static string assumeGpu;   // test builds only: "10de:2803" or "1002:1638,10de:2520"
 
-    // Same list as the game's NeedsCpuRecognition.
+    // Same list as the game's NeedsCpuRecognition (0.1.74). The 18 Oct 2026 update added NVIDIA 11A1 and 1F99 and
+    // the Microsoft Basic Render Driver (no graphics driver installed).
     static readonly string[] CpuSpeechGpus = { "10de:1f82", "10de:2803", "10de:2b85", "1002:15d8", "1002:67df", "1002:699f", "1002:744c" };
+    static readonly string[] CpuSpeechGpusOct18 = { "10de:11a1", "10de:1f99", "1414:008c" };
 
     static List<string> GraphicsCardIds()
     {
         var ids = new List<string>();
-        if (assumeGpu != null) { ids.Add(assumeGpu.ToLowerInvariant()); return ids; }
+        if (assumeGpu != null) { ids.AddRange(assumeGpu.ToLowerInvariant().Split(',')); return ids; }
         if (IsUnix) return ids;
         try
         {
@@ -87,12 +89,12 @@ static partial class Fixer
         return names;
     }
 
-    // True if the game will run speech on the CPU (and so use Moonshine for English) on this PC.
-    static bool GameUsesCpuSpeech(string launchOptions)
+    // True if the game will run speech on the CPU on this PC (on 0.1.74 English then uses Moonshine).
+    static bool GameUsesCpuSpeech(string launchOptions, bool oct18)
     {
         if (launchOptions != null && Regex.IsMatch(launchOptions, @"(^|\s)-whisper-cpu(\s|$)", RegexOptions.IgnoreCase)) return true;
         foreach (string id in GraphicsCardIds())
-            if (Array.IndexOf(CpuSpeechGpus, id) >= 0) return true;
+            if (Array.IndexOf(CpuSpeechGpus, id) >= 0 || (oct18 && Array.IndexOf(CpuSpeechGpusOct18, id) >= 0)) return true;
         return false;
     }
 

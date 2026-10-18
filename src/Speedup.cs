@@ -18,8 +18,16 @@ static partial class Fixer
     static readonly string[] ModelNames = { "ggml-base.en.bin", "ggml-base.bin" };
     const string BackupSuffix = ".speedup-backup";
     static readonly string WhisperDllRel = Path.Combine(Path.Combine("Scam With Your Friends_Data", "Managed"), "com.whisper.unity.dll");
-    const string DllOriginal = "611ca87d34dbb017ca0bac5a4a493c92d122cd5af211d78ab58bd46ec653e07b";
-    const string DllPatched  = "fb2ebfbe63008e3953776d11ce24a6bb0a99d5d1c73862fb4a3f4ccd8352fdc7";
+    // The same method body (same offset and bytes) in every game version so far; each version has its own file hash.
+    //   [0] game builds 0.1.69 - 0.1.74      [1] Steam build 26020526 (18 Oct 2026 update)
+    static readonly string[] DllOriginals = {
+        "611ca87d34dbb017ca0bac5a4a493c92d122cd5af211d78ab58bd46ec653e07b",
+        "3912ce1585fe33097c1a597c951bd9d28d89e35aee96b21bc80f94e97f26cab4" };
+    static readonly string[] DllPatcheds = {
+        "fb2ebfbe63008e3953776d11ce24a6bb0a99d5d1c73862fb4a3f4ccd8352fdc7",
+        "6e815e529e3a8f9580982ad8cceb66674695b00dd115c9ea8b066042849c2be1" };
+    static bool IsDllOriginal(string h) { return h != null && Array.IndexOf(DllOriginals, h) >= 0; }
+    static bool IsDllPatched(string h) { return h != null && Array.IndexOf(DllPatcheds, h) >= 0; }
     const int BodyOffset = 0x19F4;
     const string OrigBody = "72970400702881000006735c00000a0a066f5d00000a03250c2c05088e692d0516e00b2b0908168f2e000001e00b027b780000040407038e6928b80000060d092c1772dd040070098c2d000001284e00000a287f000006162a140c723f050070066f5e00000a8c2c000001284e00000a2881000006172a";
     const string NewBody  = "038e6920400100005b1f4b580d0920000200002f0620000200000d0920dc0500003202160d0f02097d1501000403250c2c05088e692d0516e00b2b0908168f2e000001e00b027b780000040407038e6928b80000060d092c1772dd040070098c2d000001284e00000a287f000006162a140c172a000000";
@@ -56,26 +64,35 @@ static partial class Fixer
     static void PatchDll(string dll)
     {
         byte[] data = File.ReadAllBytes(dll);
+        int v = Array.IndexOf(DllOriginals, Sha256(data));
+        if (v < 0) throw new Exception("Unknown com.whisper.unity.dll version; not patched.");
         byte[] ob = Hex(OrigBody), nb = Hex(NewBody);
         for (int i = 0; i < ob.Length; i++) if (data[BodyOffset + i] != ob[i]) throw new Exception("Unexpected com.whisper.unity.dll contents; not patched.");
         Buffer.BlockCopy(nb, 0, data, BodyOffset, nb.Length);
-        if (Sha256(data) != DllPatched) throw new Exception("Patch verification failed; com.whisper.unity.dll not changed.");
+        if (Sha256(data) != DllPatcheds[v]) throw new Exception("Patch verification failed; com.whisper.unity.dll not changed.");
         string bak = dll + BackupSuffix;
-        if (!File.Exists(bak) || Sha256(bak) != DllOriginal) File.Copy(dll, bak, true);
+        if (!File.Exists(bak) || Sha256(bak) != DllOriginals[v]) File.Copy(dll, bak, true);
         string tmp = dll + TempSuffix;
         File.WriteAllBytes(tmp, data);
         File.Copy(tmp, dll, true);
         File.Delete(tmp);
-        if (Sha256(dll) != DllPatched) throw new Exception("Writing com.whisper.unity.dll failed. Run Steam > Verify integrity of game files.");
+        if (Sha256(dll) != DllPatcheds[v]) throw new Exception("Writing com.whisper.unity.dll failed. Run Steam > Verify integrity of game files.");
     }
 
     static int UninstallDll(string dll)
     {
-        if (!File.Exists(dll) || Sha256(dll) != DllPatched) return 0;
+        int v = File.Exists(dll) ? Array.IndexOf(DllPatcheds, Sha256(dll)) : -1;
+        if (v < 0)
+        {
+            // Not patched (or a game update replaced it): a backup of an older version is no longer needed.
+            string bak = dll + BackupSuffix;
+            if (File.Exists(bak) && IsDllOriginal(Sha256(bak))) TryDelete(bak);
+            return 0;
+        }
         byte[] data = File.ReadAllBytes(dll);
         byte[] ob = Hex(OrigBody);
         Buffer.BlockCopy(ob, 0, data, BodyOffset, ob.Length);
-        if (Sha256(data) != DllOriginal) { Line(("  " + T("speed.could_not_restore_com_whisper"))); return 1; }
+        if (Sha256(data) != DllOriginals[v]) { Line(("  " + T("speed.could_not_restore_com_whisper"))); return 1; }
         File.WriteAllBytes(dll, data);
         try { File.Delete(dll + BackupSuffix); } catch { }
         Line(("  " + T("speed.shorter_listening_window_removed_original")));

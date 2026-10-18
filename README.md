@@ -3,7 +3,9 @@
 **Unofficial** community fix for speech-to-text and caller voices in *Scam With Your Friends*.
 Not made, endorsed or supported by the game's developers (Jatater Worldwide).
 
-> **Use it when:** your speech never turns into text, the game says *"An incompatible Whisper CPU backend was already loaded"*, the game crashes when speech starts, transcription is very slow on an older PC, or callers in **Portuguese** get cut off after a fraction of a second.
+> **Use it when:** your speech never turns into text, the game says *"An incompatible Whisper CPU backend was already loaded"*, the game crashes when speech starts, or transcription is very slow on an older PC.
+
+> **Game update of 18 Oct 2026 (Steam build 26020526):** the game now has its own fixes for the caller voices (steps 3), the Qwen3 limits (4) and English speech on the processor (5), so on that build the tool shows those as *fixed in the game* and leaves those files alone. The speed-up (2), the graphics card test (6) and the launch option advice still apply. If you used an older version of this tool, just run v4.5 once: it reinstalls the speed-up's listening window, which the update replaced, and removes backups of the old game files.
 
 ## Download
 
@@ -34,7 +36,7 @@ A game update or Steam's *Verify integrity of game files* also restores the orig
 3. A janela mostra cada correção. As recomendadas já vêm marcadas: clique para marcar/desmarcar e aperte **Aplicar**.
 4. Para **desfazer tudo**, abra de novo e aperte **Desfazer tudo**.
 
-Corrige, entre outras coisas, as vozes em português sendo cortadas depois de uma fração de segundo (versão 0.1.74 do jogo).
+Na versão 0.1.74 do jogo corrige, entre outras coisas, as vozes em português sendo cortadas depois de uma fração de segundo. Desde a atualização de 18 de outubro (build 26020526) o próprio jogo corrige isso; a ferramenta continua deixando o reconhecimento de voz mais rápido e diz quando usar a opção `-whisper-cpu`.
 Ferramenta **não oficial**, não feita pelos desenvolvedores do jogo.
 
 ## Languages
@@ -56,10 +58,11 @@ the program. Lines you leave out show in English. `build.cmd` includes every fil
 |---|---|---|
 | **1. Processor check** | CPUs without AVX2 (e.g. Intel i5-2500, i7-3770) on game build 0.1.71 | Fixes *"An incompatible Whisper CPU backend was already loaded"* by using the developers' own AVX speech file |
 | **2. Speech speed-up** | Everyone, biggest gain on older PCs | Converts the speech model to 8-bit (same model, half the size), and sizes the listening window to what you said instead of always 30 s |
-| **3. Caller voices** (UNTESTED in game) | Everyone, especially Portuguese, French, German, Italian, Korean, Hindi and the MOSS languages (Swedish, Danish, Polish, Turkish, Hungarian, Greek, Arabic, Persian, Chinese, Japanese, Russian) | A stricter end-of-line rule so callers stop being cut off mid-sentence (Portuguese after ~0.3 s), correct Korean and Hindi text for the voice model, card numbers read in one go instead of 4-digit bits (up to 60 s → ~8 s with MOSS), and filler lines ending in "." instead of "..." (MOSS rambles on after "...") |
-| **4. EXPERIMENTAL: Qwen3 TTS on 8 GB cards** | Off by default. NVIDIA/AMD cards with 8 GB that the game reports as e.g. 7957 MB, and 16 GB PCs reported as ~15.8 GB | The game only offers the Qwen3 voices with at least 8192 MB graphics memory and 16000 MB RAM, so most 8 GB cards and 16 GB PCs just miss it. This lowers the limits to 7680 MB / 15000 MB. **The voice model may not fit next to the game on an 8 GB card: it can stutter, run out of memory or crash.** Untick it to remove it |
-| **5. Better English speech recognition** | English players whose speech runs on the processor: RTX 4060 Ti and a few other cards the game won't use for speech, or anyone with `-whisper-cpu`. Ticked automatically on those PCs if the processor is fast enough (AVX2, 8+ threads) | Since 0.1.74 the game switches English speech on those PCs to the small Moonshine model, which is much less accurate ("give me your pig, Cornwallard"). This keeps the normal Whisper model on the processor instead, the same one other languages already use there. Each sentence takes a bit longer to recognize |
-| **6. Graphics card test** | Everyone | Runs the game's own speech engine on your graphics card in a separate test process. If it crashes or freezes, tells you to add the launch option `-whisper-cpu` |
+| **3. Caller voices** (game 0.1.74 only; built into the game since build 26020526) | Everyone, especially Portuguese, French, German, Italian, Korean, Hindi and the MOSS languages (Swedish, Danish, Polish, Turkish, Hungarian, Greek, Arabic, Persian, Chinese, Japanese, Russian) | A stricter end-of-line rule so callers stop being cut off mid-sentence (Portuguese after ~0.3 s), correct Korean and Hindi text for the voice model, card numbers read in one go instead of 4-digit bits (up to 60 s → ~8 s with MOSS), and filler lines ending in "." instead of "..." (MOSS rambles on after "...") |
+| **4. EXPERIMENTAL: Qwen3 TTS on 8 GB cards** (0.1.74 only; built into the game since build 26020526) | Off by default. NVIDIA/AMD cards with 8 GB that the game reports as e.g. 7957 MB, and 16 GB PCs reported as ~15.8 GB | The game only offers the Qwen3 voices with at least 8192 MB graphics memory and 16000 MB RAM, so most 8 GB cards and 16 GB PCs just miss it. This lowers the limits to 7680 MB / 15000 MB. **The voice model may not fit next to the game on an 8 GB card: it can stutter, run out of memory or crash.** Untick it to remove it |
+| **5. Better English speech recognition** (0.1.74 only; built into the game since build 26020526) | English players whose speech runs on the processor: RTX 4060 Ti and a few other cards the game won't use for speech, or anyone with `-whisper-cpu`. Ticked automatically on those PCs if the processor is fast enough (AVX2, 8+ threads) | Since 0.1.74 the game switches English speech on those PCs to the small Moonshine model, which is much less accurate ("give me your pig, Cornwallard"). This keeps the normal Whisper model on the processor instead, the same one other languages already use there. Each sentence takes a bit longer to recognize |
+| **6. Graphics card test** | Everyone | Runs the game's own speech engine on your graphics card in a separate test process. If it crashes or freezes, tells you to add the launch option `-whisper-cpu`, and tests once more with Vulkan add-on layers (overlays, recorders, AMD switchable graphics) turned off to show whether one of them is the cause |
+| **Launch option advice** | PCs with AMD processor graphics + an NVIDIA card; players whose game language isn't English | Asks you to add `-whisper-cpu` even when the test passes: on AMD + NVIDIA PCs the game's speech often never finishes loading on the graphics card, and speech for languages other than English is very slow there (15-30 s per sentence). For German, Spanish, Arabic, Japanese and Chinese it also points to the game's own *Moonshine (6 languages)* setting |
 | **Tips** | Slower PCs | Reminds you to turn off the BanditCam watermark and cap FPS |
 
 On an Intel i5-2500 with a 2010 graphics card, these steps took speech-to-text from *crashing / never finishing* to **about 4 seconds per sentence**.
@@ -78,14 +81,14 @@ Only these, and only if they are the exact known versions (checked by SHA-256). 
 | `Scam With Your Friends_Data\Managed\ScriptsAssDef.dll` | 2 bytes in the speech model choice (step 5) | `.whisperkeep-backup` |
 | `Scam With Your Friends_Data\Managed\Assembly-CSharp.dll` | card-number pauses (1 byte) and 66 filler lines (step 3); Qwen3 limits (8 bytes, step 4, only if you tick it) | none needed: every change is reversible byte for byte |
 
-It **reads** (never writes) your Steam launch options for this game and the game's BanditCam watermark setting, only to show the right advice.
+It **reads** (never writes) your Steam launch options and installed build number for this game, and the game's BanditCam watermark, call language and speech recognition settings, only to show the right advice.
 It downloads nothing and sends nothing anywhere. Exact byte-level details are in [PATCHES.md](PATCHES.md).
 
 ## Is it safe?
 
 You shouldn't have to take our word for it, so here is how to check:
 
-- **Read the code.** It's plain C# in [`src/`](src) (about 3,000 lines including the window). No obfuscation, no network code.
+- **Read the code.** It's plain C# in [`src/`](src) (about 3,400 lines including the window). No obfuscation, no network code.
 - **Built by GitHub, not on someone's PC.** The [Actions](../../actions) tab shows every build: the exact commands, and the SHA-256 of the .exe it produced. Releases are attached automatically by that build.
 - **Check your download.** In Command Prompt: `certutil -hashfile SWYF-Speech-Fixer.exe SHA256` and compare with `SHA256SUMS.txt` on the release.
 - **Scan it yourself** with your antivirus or [VirusTotal](https://www.virustotal.com) if you like.
@@ -110,7 +113,7 @@ Some machine-learning engines (generic names like `Malicious (score: 100)`, `sus
   `src/Lang.cs` the translation lookup (`T("key")`, falls back to English per line).
 - `SWYF-Speech-Fixer.exe --convert in.bin out.bin`: runs only the model conversion (used by the CI check).
 - `tools/genmodel.py`: generates full-size Whisper test models with random weights for that check.
-- Test-only options (`--assume-cpu`, `--assume-gpu`, `--assume-threads`, `--simulate-probe`, `--test-*` for driving the window, Linux support for the GPU test) only exist when compiled with `/define:SWYF_TEST`. Release builds don't contain them.
+- Test-only options (`--assume-cpu`, `--assume-gpu`, `--assume-threads`, `--assume-build`, `--assume-lang`, `--assume-provider`, `--assume-layers`, `--simulate-probe`, `--test-*` for driving the window, Linux support for the GPU test) only exist when compiled with `/define:SWYF_TEST`. Release builds don't contain them.
 
 ## License
 

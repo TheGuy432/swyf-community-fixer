@@ -50,8 +50,11 @@ static partial class Fixer
 
     sealed class Session
     {
-        public string GameDir, ModelDir, Dll, Launch, CallLanguage, GameBuild;
+        public string GameDir, ModelDir, Dll, Launch, CallLanguage, GameBuild, Provider;
         public bool HasAvx, HasAvx2, SpeedInstalled, SpeedTodo, CpuSpeech, StrongCpu;
+        public bool OwnFixes;      // the game has the developers' own fixes (18 Oct 2026 update or newer)
+        public bool AmdNvidia;     // AMD processor graphics + NVIDIA card
+        public int SteamBuild;
         public int Threads;
         public CpuFixState CpuState;
         public string PocketHash, AsmHash, SadHash;
@@ -61,10 +64,16 @@ static partial class Fixer
         public Item[] Items;   // console menu order
     }
 
+    // Why the player should add the -whisper-cpu launch option (None = no need, or they already run speech on the CPU).
+    enum CpuReason { None, GpuTest, AmdNvidia, Language }
+
     sealed class ApplyResult
     {
         public ProbeResult Probe;          // null if the graphics card test didn't run
+        public ProbeResult ProbeNoLayers;  // second test with Vulkan implicit layers off (only after a failed test)
+        public List<string> Layers;        // implicit layers on this PC (only after a failed test)
         public bool GpuProblem, GpuNone, HasCpuOption, KeepHint;
+        public CpuReason Reason;
         public string Launch;
         public int Steps;
     }
@@ -84,8 +93,8 @@ static partial class Fixer
         s.CpuState = s.HasAvx ? GetCpuFixState(gameDir, s.HasAvx2) : CpuFixState.NotNeeded;
 
         string dllHash = File.Exists(s.Dll) ? Sha256(s.Dll) : null;
-        s.SpeedInstalled = ModelsConverted(s.ModelDir) || dllHash == DllPatched;
-        s.SpeedTodo = dllHash == DllOriginal;
+        s.SpeedInstalled = ModelsConverted(s.ModelDir) || IsDllPatched(dllHash);
+        s.SpeedTodo = IsDllOriginal(dllHash);
         foreach (string n in ModelNames)
         {
             string p = Path.Combine(s.ModelDir, n);
@@ -96,15 +105,20 @@ static partial class Fixer
         s.Pocket = ReadPocketState(gameDir);
         s.Asm = ReadAsmState(gameDir);
         s.SadHash = File.Exists(SadPath(gameDir)) ? Sha256(SadPath(gameDir)) : null;
+        s.SteamBuild = ReadSteamBuildId(gameDir);
+        s.OwnFixes = GameHasOwnFixes(s);
         s.Launch = ReadLaunchOptions();
-        s.CpuSpeech = GameUsesCpuSpeech(s.Launch);
+        s.CpuSpeech = GameUsesCpuSpeech(s.Launch, s.OwnFixes);
         s.StrongCpu = s.HasAvx2 && s.Threads >= 8;
-        s.CallLanguage = ReadPrefString("Kolkata.CallLanguage");
+        s.CallLanguage = ReadCallLanguage();
+        s.Provider = ReadSpeechProvider();
+        s.AmdNvidia = IsAmdPlusNvidia(GraphicsCardIds());
         if (s.Asm.Known || s.SadHash == SadOriginal || s.SadHash == SadPatched) s.GameBuild = "0.1.74";
         else
         {
             string sh = File.Exists(ScriptsPath(gameDir)) ? Sha256(ScriptsPath(gameDir)) : null;
             if (sh == ScriptsOriginal || sh == ScriptsPatched) s.GameBuild = "0.1.71";
+            else if (s.SteamBuild > 0) s.GameBuild = s.SteamBuild.ToString();
         }
 
         s.Cpu = new Item { Key = "cpu" };
@@ -182,23 +196,28 @@ static partial class Fixer
         voice.Available = pocketKnown || s.Asm.Known;
         voice.Installed = anyVoice;                    // unticking removes whatever is there
         voice.Partial = anyVoice && !fullVoice;        // an older or partial version: ticked = update
+        voice.NotNeeded = !voice.Available && s.OwnFixes;
         voice.Status = fullVoice ? T("core.installed")
             : anyVoice ? T("voice.status_update") + " " + VoiceFixDescription(s.CallLanguage)
             : voice.Available ? T("voice.status_not_installed") + " " + VoiceFixDescription(s.CallLanguage)
+            : s.OwnFixes ? T("core.fixed_in_game")
             : T("core.not_available_for_this_game_2");
 
         qwen.Name = T("core.qwen3_tts_on_8_gb");
         qwen.Installed = s.Asm.Known && s.Asm.Qwen;
         qwen.Available = s.Asm.Known;
+        qwen.NotNeeded = !qwen.Available && s.OwnFixes;
         qwen.Status = qwen.Installed ? T("core.installed_untick_to_remove_if")
             : qwen.Available ? T("core.off_unlocks_qwen3_voices_on")
+            : s.OwnFixes ? T("core.fixed_in_game")
             : T("core.not_available_for_this_game");
 
         keep.Name = T("core.better_english_speech_recognition_whisper");
         keep.Installed = s.SadHash == SadPatched;
         keep.Available = hasAvx && (s.SadHash == SadPatched || s.SadHash == SadOriginal);
-        keep.NotNeeded = !s.CpuSpeech;
+        keep.NotNeeded = !s.CpuSpeech || (!keep.Available && s.OwnFixes);
         keep.Status = keep.Installed ? T("core.installed_english_speech_uses_more")
+            : !keep.Available && s.OwnFixes ? T("core.fixed_in_game")
             : !keep.Available ? T("core.not_available_for_this_game")
             : s.CpuSpeech && s.StrongCpu ? T("core.not_installed_recommended_on_your")
             : s.CpuSpeech ? T("core.not_installed_more_accurate_english")
@@ -225,6 +244,10 @@ static partial class Fixer
         string gameDir = s.GameDir;
         DisableOldBepInEx(gameDir);
         if (s.CpuState == CpuFixState.FixedByDevelopers) CleanUpAfterDeveloperFix(gameDir);
+        if (s.OwnFixes) CleanUpAfterGameUpdate(gameDir, s.Dll);
+        r.Launch = ReadLaunchOptions();
+        r.HasCpuOption = HasCpuOption(r.Launch);
+        r.Reason = CpuAdvice(s);
         foreach (Item it in s.Items) if (StepWanted(it, onlyChanges)) r.Steps++;
         int step = 0;
         foreach (Item it in s.Items)
@@ -237,7 +260,43 @@ static partial class Fixer
             bool ok = RunStep(s, it, r);
             if (OnStepEnd != null) OnStepEnd(it, ok);
         }
+        if (r.GpuProblem) r.Reason = CpuReason.GpuTest;
         return r;
+    }
+
+    static bool HasCpuOption(string launch)
+    {
+        return launch != null && Regex.IsMatch(launch, @"(^|\s)-whisper-cpu(\s|$)", RegexOptions.IgnoreCase);
+    }
+
+    // Would -whisper-cpu help on this PC, whatever the launch options are now? (The graphics card test aside.)
+    static CpuReason CpuOptionHelps(Session s)
+    {
+        if (!s.HasAvx) return CpuReason.None;
+        if (s.AmdNvidia) return CpuReason.AmdNvidia;
+        string l = s.CallLanguage;
+        if (l != null && l != "en" && s.Provider != "Deepgram" && !(s.OwnFixes && s.Provider == "Moonshine" && IsMoonshineLanguage(l)))
+            return CpuReason.Language;
+        return CpuReason.None;
+    }
+
+    // What to tell the player before the graphics card test runs. None if speech already runs on the processor.
+    static CpuReason CpuAdvice(Session s)
+    {
+        if (HasCpuOption(ReadLaunchOptions()) || s.CpuSpeech) return CpuReason.None;
+        return CpuOptionHelps(s);
+    }
+
+    static string CpuReasonText(CpuReason why, Session s)
+    {
+        switch (why)
+        {
+            case CpuReason.GpuTest: return T("ui.launch_why");
+            case CpuReason.AmdNvidia: return T("ui.launch_why_amd_nvidia");
+            case CpuReason.Language:
+                return T("ui.launch_why_language") + (s.OwnFixes && IsMoonshineLanguage(s.CallLanguage) ? " " + T("ui.launch_or_moonshine") : "");
+        }
+        return "";
     }
 
     // Returns false if the step finished but didn't fully work (the window shows a warning icon).
@@ -284,15 +343,17 @@ static partial class Fixer
         ProbeResult probe = RunVulkanProbe(s.GameDir, simulateProbe);
         r.Probe = probe;
         r.Launch = ReadLaunchOptions();
-        r.HasCpuOption = r.Launch != null && Regex.IsMatch(r.Launch, @"(^|\s)-whisper-cpu(\s|$)", RegexOptions.IgnoreCase);
+        r.HasCpuOption = HasCpuOption(r.Launch);
         r.GpuProblem = probe.Outcome == ProbeOutcome.Crashed || probe.Outcome == ProbeOutcome.Hung;
         r.GpuNone = probe.Outcome == ProbeOutcome.NoGpu;
         switch (probe.Outcome)
         {
             case ProbeOutcome.Passed:
                 Line("  " + T("core.passed_on_speech_can_use", probe.GpuName));
-                if (r.HasCpuOption)
+                if (r.HasCpuOption && CpuOptionHelps(s) == CpuReason.None)
                     Line("  " + T("core.note_you_have_whisper_cpu"));
+                else if (r.HasCpuOption)
+                    Line("  " + T("core.keep_whisper_cpu"));
                 break;
             case ProbeOutcome.NoGpu:
                 Line("  " + T("core.no_usable_vulkan_graphics_card"));
@@ -305,6 +366,13 @@ static partial class Fixer
                 string what = probe.Outcome == ProbeOutcome.Hung ? T("core.froze") : T("core.crashed");
                 string detail = probe.Detail != "" ? " (" + probe.Detail + ")" : "";
                 Line("  " + T("core.failed_speech_engine_during_graphics", what, detail));
+                // Same test again without the Vulkan add-on layers (overlays, recorders, AMD switchable graphics):
+                // tells us whether one of those is behind the freeze. Changes nothing on the PC.
+                Out("  " + T("core.retest_without_layers") + " ");
+                r.ProbeNoLayers = RunVulkanProbe(s.GameDir, simulateProbe, true);
+                r.Layers = ImplicitLayerNames();
+                Line(r.ProbeNoLayers.Outcome == ProbeOutcome.Passed ? T("core.retest_passed") : T("core.retest_failed"));
+                if (r.Layers.Count > 0) Line("  " + T("core.layers_on_pc", string.Join(", ", r.Layers.ToArray())));
                 Line("  " + T("core.without_whisper_cpu_launch_option"));
                 if (r.HasCpuOption)
                     Line("  " + T("core.you_already_have_launch_option"));
@@ -331,6 +399,10 @@ static partial class Fixer
         }
         else if (s.HasAvx) tips.Add(T("core.speak_after_caller_has_finished_2"));
         else tips.Add(T("core.your_cpu_can_t_run_2"));
+        bool moonshineInCard = r != null && r.Reason == CpuReason.Language && !r.HasCpuOption;   // already said there
+        if (s.HasAvx && s.OwnFixes && s.CallLanguage != null && s.CallLanguage != "en" && IsMoonshineLanguage(s.CallLanguage)
+            && s.Provider != "Moonshine" && !moonshineInCard)
+            tips.Add(T("core.tip_moonshine"));
         return tips;
     }
 
