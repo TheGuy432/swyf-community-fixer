@@ -790,7 +790,7 @@ static partial class Fixer
             if (it.NeedDownload || it.NeedCpuOption) top += Ui.S(30) + Ui.S(8);
 
             bool open = expanded.Contains(it.Key);
-            var link = new Label { Text = T("ui.what_does_this_do") + (open ? " ▴" : " ▾"), Font = Ui.F(12.5f), ForeColor = Ui.Blue, AutoSize = true, Left = Ui.S(48), Top = top, Cursor = Cursors.Hand, BackColor = Color.Transparent };
+            var link = new Label { Text = T("ui.what_does_this_do") + (open ? " ▴" : " ▾"), Font = Ui.F(12.5f), ForeColor = Ui.Blue, AutoSize = true, MaximumSize = new Size(Ui.S(650), 0), Left = Ui.S(48), Top = top, Cursor = Cursors.Hand, BackColor = Color.Transparent };
             string key = it.Key;
             link.Click += delegate
             {
@@ -814,10 +814,13 @@ static partial class Fixer
         // "Questions about this tool? Tiger's fixer thread" link (not the developers' support).
         int ThreadLink(Control parent, int x, int y)
         {
-            var l = new Label { Text = T("ui.thread_link"), Font = Ui.F(12.5f), ForeColor = Ui.Blue, AutoSize = true, Left = Ui.S(x), Top = y, Cursor = Cursors.Hand, BackColor = Color.Transparent };
+            string text = T("ui.thread_link");
+            Font f = Ui.F(12.5f);
+            int h = Ui.TextHeight(text, f, Ui.S(716)) + Ui.S(2);
+            var l = new Label { Text = text, Font = f, ForeColor = Ui.Blue, AutoSize = false, Width = Ui.S(716), Height = h, Left = Ui.S(x), Top = y, Cursor = Cursors.Hand, BackColor = Color.Transparent, UseMnemonic = false };
             l.Click += delegate { OpenUrl(ModThreadUrl); };
             parent.Controls.Add(l);
-            return y + Ui.S(20);
+            return y + h;
         }
 
         static void OpenUrl(string url)

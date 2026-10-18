@@ -58,7 +58,7 @@ Ferramenta **não oficial**, não feita pelos desenvolvedores do jogo.
 The tool picks its language by itself: the game's call language first, then your Windows language, otherwise English.
 Change it with the language button in the top-right corner of the window.
 
-Available now: **English** and **Português (Brasil)**. Translations are made with AI and checked by players when possible,
+Available now: **English**, **Português (Brasil)**, **Deutsch**, **Español**, **Français**, **Polski** and **Русский**. Translations are made with AI and checked by players when possible,
 so a line may sound a bit off. Tell Tiger in the [fixer thread](https://discord.com/channels/1406416808700940399/1560834677529514055) or open an issue.
 
 **Add or fix a translation:** every text is in [`lang/`](lang), one plain text file per language (`en.txt`, `pt.txt`, ...).
