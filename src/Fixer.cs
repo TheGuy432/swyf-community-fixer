@@ -29,7 +29,7 @@ static partial class Fixer
     // Where players ask about this tool: Tiger's fixer thread in the game's Discord (not the developers'
     // support threads - the fixer isn't made or supported by the developers).
     const string ModThreadUrl = "https://discord.com/channels/1406416808700940399/1560834677529514055";
-    const string ReleasesUrl = "https://github.com/TheGuy432/swyf-speech-fixer/releases/latest";
+    const string ReleasesUrl = "https://github.com/TheGuy432/swyf-community-fixer/releases/latest";
 
     [DllImport("kernel32.dll")]
     static extern bool IsProcessorFeaturePresent(uint feature);

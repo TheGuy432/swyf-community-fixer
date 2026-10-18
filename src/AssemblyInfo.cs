@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("SWYF Community Fixer")]
-[assembly: AssemblyDescription("Unofficial community fixes for Scam With Your Friends, made by Tiger (Discord: tigerlundberg). Not made or supported by the game's developers. Source: https://github.com/TheGuy432/swyf-speech-fixer")]
+[assembly: AssemblyDescription("Unofficial community fixes for Scam With Your Friends, made by Tiger (Discord: tigerlundberg). Not made or supported by the game's developers. Source: https://github.com/TheGuy432/swyf-community-fixer")]
 [assembly: AssemblyCompany("Tiger (Discord: tigerlundberg)")]
 [assembly: AssemblyProduct("SWYF Community Fixer")]
 [assembly: AssemblyCopyright("Copyright (c) 2026 Tiger (TheGuy432). MIT License.")]
