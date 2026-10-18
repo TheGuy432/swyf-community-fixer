@@ -55,6 +55,9 @@ download, because the model is about 250 MB:
 3. Run the tool (or press **Check again** if it's still open), tick **Bigger speech model for your language** and press **Apply**.
    It first times the model on your processor and only installs it if your PC is fast enough.
 
+The first reply in each game session takes a few extra seconds while the game loads its models (about 3 s for the bigger
+model on an i7-8700K); that's normal, later replies are faster.
+
 The option only shows up when the tool sees your game language isn't English. If your PC doesn't meet the requirements
 (AVX2, 8 threads, 12 GB memory), it says so instead. To remove it, untick it or press **Undo everything**.
 

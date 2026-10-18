@@ -358,3 +358,5 @@ disclaimer.accept = Rozumiem, dalej
 disclaimer.console_prompt = Wpisz T i naciśnij Enter, żeby kontynuować (cokolwiek innego zamyka):
 disclaimer.console_yes = t
 ui.copy_failed = Nie udało się skopiować - spróbuj ponownie
+core.tip_first_load = Pierwsza odpowiedź w sesji może potrwać kilka sekund dłużej: gra ładuje modele mowy i głosu, kiedy zaczyna się pierwsza rozmowa. To normalne, kolejne odpowiedzi są szybsze.
+core.tip_first_load_big = Pierwsza odpowiedź w sesji może potrwać kilka sekund dłużej: gra ładuje modele mowy i głosu, kiedy zaczyna się pierwsza rozmowa, a większy model mowy ładuje się trochę dłużej. To normalne, kolejne odpowiedzi są szybsze.

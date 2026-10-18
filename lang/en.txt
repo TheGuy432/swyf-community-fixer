@@ -358,3 +358,5 @@ disclaimer.accept = I understand, continue
 disclaimer.console_prompt = Type Y and press Enter to continue (anything else closes it):
 disclaimer.console_yes = y
 ui.copy_failed = Couldn't copy - try again
+core.tip_first_load = The first reply in a session can take a few extra seconds: the game loads its speech and voice models when the first call starts. That's normal, later replies are faster.
+core.tip_first_load_big = The first reply in a session can take a few extra seconds: the game loads its speech and voice models when the first call starts, and the bigger speech model takes a bit longer to load. That's normal, later replies are faster.

@@ -358,3 +358,5 @@ disclaimer.accept = J'ai compris, continuer
 disclaimer.console_prompt = Tape O et appuie sur Entrée pour continuer (autre chose ferme) :
 disclaimer.console_yes = o
 ui.copy_failed = Copie impossible - réessaie
+core.tip_first_load = La première réponse d'une session peut prendre quelques secondes de plus : le jeu charge ses modèles de voix au début du premier appel. C'est normal, les réponses suivantes sont plus rapides.
+core.tip_first_load_big = La première réponse d'une session peut prendre quelques secondes de plus : le jeu charge ses modèles de voix au début du premier appel, et le modèle vocal plus gros met un peu plus de temps à charger. C'est normal, les réponses suivantes sont plus rapides.

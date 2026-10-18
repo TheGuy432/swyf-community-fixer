@@ -358,3 +358,5 @@ disclaimer.accept = Verstanden, weiter
 disclaimer.console_prompt = Tippe J und drück Enter zum Fortfahren (alles andere schließt):
 disclaimer.console_yes = j
 ui.copy_failed = Kopieren fehlgeschlagen - nochmal
+core.tip_first_load = Die erste Antwort in einer Sitzung kann ein paar Sekunden länger dauern: Das Spiel lädt seine Sprach- und Stimmmodelle, wenn der erste Anruf startet. Das ist normal, danach geht es schneller.
+core.tip_first_load_big = Die erste Antwort in einer Sitzung kann ein paar Sekunden länger dauern: Das Spiel lädt seine Sprach- und Stimmmodelle, wenn der erste Anruf startet, und das größere Sprachmodell braucht etwas länger. Das ist normal, danach geht es schneller.

@@ -429,6 +429,7 @@ static partial class Fixer
         }
         else if (s.HasAvx) tips.Add(T("core.speak_after_caller_has_finished_2"));
         else tips.Add(T("core.your_cpu_can_t_run_2"));
+        if (s.HasAvx) tips.Add(T(s.Big != null && s.Big.Installed || (r != null && s.Big != null && s.Big.Wanted && s.Big.Available) ? "core.tip_first_load_big" : "core.tip_first_load"));
         if (s.Big != null && !s.Big.Available && (s.Big.NeedCpuOption || s.Big.NeedDownload))
             tips.Add(T("core.tip_big", BigModelFile));
         bool moonshineInCard = r != null && r.Reason == CpuReason.Language && !r.HasCpuOption;   // already said there

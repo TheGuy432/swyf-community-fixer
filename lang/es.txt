@@ -358,3 +358,5 @@ disclaimer.accept = Entendido, continuar
 disclaimer.console_prompt = Escribe S y pulsa Enter para continuar (cualquier otra cosa cierra):
 disclaimer.console_yes = s
 ui.copy_failed = No se pudo copiar - reintenta
+core.tip_first_load = La primera respuesta de cada sesión puede tardar unos segundos más: el juego carga sus modelos de voz cuando empieza la primera llamada. Es normal, las siguientes respuestas son más rápidas.
+core.tip_first_load_big = La primera respuesta de cada sesión puede tardar unos segundos más: el juego carga sus modelos de voz cuando empieza la primera llamada, y el modelo de voz más grande tarda un poco más en cargar. Es normal, las siguientes respuestas son más rápidas.
