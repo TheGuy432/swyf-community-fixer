@@ -350,3 +350,4 @@ disclaimer.thread = Dúvidas ou problemas: tópico do fixer do Tiger no Discord:
 disclaimer.accept = Entendi, continuar
 disclaimer.console_prompt = Digite S e aperte Enter para continuar (qualquer outra coisa fecha):
 disclaimer.console_yes = s
+ui.copy_failed = Não consegui copiar - tente de novo

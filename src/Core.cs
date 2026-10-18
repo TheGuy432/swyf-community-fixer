@@ -379,9 +379,10 @@ static partial class Fixer
         {
             case ProbeOutcome.Passed:
                 Line("  " + T("core.passed_on_speech_can_use", probe.GpuName));
-                if (r.HasCpuOption && CpuOptionHelps(s) == CpuReason.None)
+                bool benchDecides = s.Bench != null && s.Bench.Available && s.Bench.Wanted;   // the speed test measures it
+                if (r.HasCpuOption && !benchDecides && CpuOptionHelps(s) == CpuReason.None)
                     Line("  " + T("core.note_you_have_whisper_cpu"));
-                else if (r.HasCpuOption)
+                else if (r.HasCpuOption && !benchDecides)
                     Line("  " + T("core.keep_whisper_cpu"));
                 break;
             case ProbeOutcome.NoGpu:
@@ -505,7 +506,7 @@ static partial class Fixer
         if (b == null) return "not tested";
         if (b.Outcome != BenchOutcome.Ok) return b.Outcome.ToString().ToLowerInvariant() + (b.Detail != "" ? " (" + b.Detail + ")" : "");
         string t = Secs(b.RunMs) + " s (load " + Secs(b.LoadMs) + " s";
-        if (b.EncodeMs >= 0) t += ", encoder " + Secs(b.EncodeMs) + " s";
+        if (b.EncodeMs >= 50) t += ", encoder " + Secs(b.EncodeMs) + " s";   // on graphics cards whisper.cpp's encoder time can read ~0
         return t + ")";
     }
 }

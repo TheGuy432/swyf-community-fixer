@@ -377,7 +377,7 @@ static partial class Fixer
             Line(T("main.done"));
             if (r.BenchGpu.Outcome == BenchOutcome.NoClip) { say(T("bench.no_clip")); return false; }
             say(r.BenchGpu.Outcome == BenchOutcome.Ok
-                ? T("bench.result_gpu", Secs(r.BenchGpu.RunMs), Secs(r.BenchGpu.LoadMs)) + Split(r.BenchGpu)
+                ? T("bench.result_gpu", Secs(r.BenchGpu.RunMs), Secs(r.BenchGpu.LoadMs))
                 : T("bench.result_gpu_failed", BenchOutcomeText(r.BenchGpu)));
         }
         Out("  " + T("bench.testing_cpu", LanguageLabel(lang)) + " ");
@@ -385,7 +385,7 @@ static partial class Fixer
         Line(T("main.done"));
         if (r.BenchCpu.Outcome == BenchOutcome.NoClip) { say(T("bench.no_clip")); return false; }
         say(r.BenchCpu.Outcome == BenchOutcome.Ok
-            ? T("bench.result_cpu", Secs(r.BenchCpu.RunMs), Secs(r.BenchCpu.LoadMs)) + Split(r.BenchCpu)
+            ? T("bench.result_cpu", Secs(r.BenchCpu.RunMs), Secs(r.BenchCpu.LoadMs))
             : T("bench.result_cpu_failed", BenchOutcomeText(r.BenchCpu)));
 
         BenchResult g = r.BenchGpu, c = r.BenchCpu;
@@ -406,11 +406,6 @@ static partial class Fixer
         if (cpuOk && c.RunMs > 4000) say(T("bench.verdict_slow_cpu"));
         say(T("bench.screenshot"));
         return cpuOk;
-    }
-
-    static string Split(BenchResult b)
-    {
-        return b.EncodeMs >= 0 && b.DecodeMs >= 0 ? " " + T("bench.split", Secs(b.EncodeMs), Secs(b.DecodeMs)) : "";
     }
 
     static string LastLine(string text)

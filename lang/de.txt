@@ -357,3 +357,4 @@ disclaimer.thread = Fragen oder Probleme: Tigers Fixer-Thread auf Discord: {0}
 disclaimer.accept = Verstanden, weiter
 disclaimer.console_prompt = Tippe J und drück Enter zum Fortfahren (alles andere schließt):
 disclaimer.console_yes = j
+ui.copy_failed = Kopieren fehlgeschlagen - nochmal

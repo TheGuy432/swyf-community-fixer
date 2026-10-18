@@ -357,3 +357,4 @@ disclaimer.thread = Questions ou problèmes : le fil du fixer de Tiger sur Disco
 disclaimer.accept = J'ai compris, continuer
 disclaimer.console_prompt = Tape O et appuie sur Entrée pour continuer (autre chose ferme) :
 disclaimer.console_yes = o
+ui.copy_failed = Copie impossible - réessaie

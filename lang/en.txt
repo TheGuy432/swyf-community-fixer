@@ -357,3 +357,4 @@ disclaimer.thread = Questions or problems: Tiger's fixer thread on Discord: {0}
 disclaimer.accept = I understand, continue
 disclaimer.console_prompt = Type Y and press Enter to continue (anything else closes it):
 disclaimer.console_yes = y
+ui.copy_failed = Couldn't copy - try again

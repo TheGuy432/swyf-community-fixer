@@ -357,3 +357,4 @@ disclaimer.thread = Dudas o problemas: el hilo del fixer de Tiger en Discord: {0
 disclaimer.accept = Entendido, continuar
 disclaimer.console_prompt = Escribe S y pulsa Enter para continuar (cualquier otra cosa cierra):
 disclaimer.console_yes = s
+ui.copy_failed = No se pudo copiar - reintenta

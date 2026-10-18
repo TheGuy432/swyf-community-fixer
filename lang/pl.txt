@@ -357,3 +357,4 @@ disclaimer.thread = Pytania albo problemy: wątek Tigera o fixerze na Discordzie
 disclaimer.accept = Rozumiem, dalej
 disclaimer.console_prompt = Wpisz T i naciśnij Enter, żeby kontynuować (cokolwiek innego zamyka):
 disclaimer.console_yes = t
+ui.copy_failed = Nie udało się skopiować - spróbuj ponownie

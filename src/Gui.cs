@@ -805,7 +805,7 @@ static partial class Fixer
             {
                 var copy = new FlatBtn(T("ui.copy_cpu_option"), !it.NeedDownload).Fit(170);
                 copy.Height = Ui.S(30); copy.Left = x; copy.Top = top;
-                copy.Click += delegate { try { Clipboard.SetText("-whisper-cpu"); copy.Text = T("ui.copied"); } catch { } };
+                copy.Click += delegate { copy.Text = CopyText("-whisper-cpu") ? T("ui.copied") : T("ui.copy_failed"); };
                 var steam = new FlatBtn(T("ui.open_steam"), false).Fit(120);
                 steam.Height = Ui.S(30); steam.Left = copy.Right + Ui.S(10); steam.Top = top;
                 steam.Click += delegate { OpenUrl("steam://open/games"); };
@@ -858,6 +858,13 @@ static partial class Fixer
             l.Click += delegate { OpenUrl(ModThreadUrl); };
             parent.Controls.Add(l);
             return y + h;
+        }
+
+        // The clipboard is often briefly locked by other programs (Discord, clipboard managers): retry, and say so if it fails.
+        static bool CopyText(string text)
+        {
+            try { Clipboard.SetDataObject(text, true, 10, 100); return true; }
+            catch { return false; }
         }
 
         static void OpenUrl(string url)
@@ -1014,7 +1021,7 @@ static partial class Fixer
             };
             copy.Click += delegate
             {
-                try { Clipboard.SetText(log.ToString()); copy.Text = T("ui.copied"); } catch { }
+                copy.Text = CopyText(log.ToString()) ? T("ui.copied") : T("ui.copy_failed");
             };
             return y + Ui.S(26) + (open ? Ui.S(170) : 0);
         }
@@ -1112,7 +1119,9 @@ static partial class Fixer
                 var report = new FlatBtn(T("ui.copy_report"), false).Fit(190);
                 report.Click += delegate
                 {
-                    try { Clipboard.SetText(BuildReport(session, result)); report.Text = T("ui.copied"); } catch { }
+                    string text = null;
+                    try { text = BuildReport(session, result); } catch (Exception ex) { text = "SWYF Community Fixer " + Version + " report failed: " + ex.Message; }
+                    report.Text = CopyText(text) ? T("ui.copied") : T("ui.copy_failed");
                 };
                 Buttons(again, report, CloseButton(true));
             }
@@ -1169,7 +1178,7 @@ static partial class Fixer
                     c.Controls.Add(code);
                     var copy = new FlatBtn(T("ui.copy"), true).Fit(80);
                     copy.Height = Ui.S(34); copy.Left = code.Right + Ui.S(10); copy.Top = cy;
-                    copy.Click += delegate { try { Clipboard.SetText("-whisper-cpu"); copy.Text = T("ui.copied"); } catch { } };
+                    copy.Click += delegate { copy.Text = CopyText("-whisper-cpu") ? T("ui.copied") : T("ui.copy_failed"); };
                     var steam = new FlatBtn(T("ui.open_steam"), false).Fit(120);
                     steam.Height = Ui.S(34); steam.Left = copy.Right + Ui.S(10); steam.Top = cy;
                     steam.Click += delegate { try { Process.Start(new ProcessStartInfo("steam://open/games") { UseShellExecute = true }); } catch { } };
@@ -1198,7 +1207,7 @@ static partial class Fixer
         {
             string intro;
             List<string> tips = Tips(session, result, out intro);
-            if (result != null && result.Probe != null && result.Probe.Outcome == ProbeOutcome.Passed && result.HasCpuOption)
+            if (result != null && result.Probe != null && result.Probe.Outcome == ProbeOutcome.Passed && result.HasCpuOption && result.BenchCpu == null)
                 tips.Insert(0, CpuOptionHelps(session) == CpuReason.None ? T("ui.tip_remove_cpu_option") : T("ui.tip_keep_cpu_option"));
             var c = new Card { Left = Ui.S(20), Top = y, Width = Ui.S(720) };
             int cy = Ui.S(14);

@@ -357,3 +357,4 @@ disclaimer.thread = Вопросы или проблемы: ветка фикс�
 disclaimer.accept = Понятно, продолжить
 disclaimer.console_prompt = Введи Y (или Д) и нажми Enter, чтобы продолжить (всё остальное закроет):
 disclaimer.console_yes = д
+ui.copy_failed = Не удалось скопировать - попробуй ещё
