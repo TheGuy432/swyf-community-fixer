@@ -110,6 +110,7 @@ jobs:
           $a = (Get-FileHash official-small-q8.bin).Hash.ToLower()
           $b = (Get-FileHash model\SWYF-Speech-Model-small-q8.bin).Hash.ToLower()
           "small  official=$a  ours=$b"
+          Write-Host "::notice title=Speech model SHA-256::SWYF-Speech-Model-small-q8.bin $b (size $((Get-Item model\SWYF-Speech-Model-small-q8.bin).Length) bytes)"
           if ($a -ne $b) { throw "Conversion of ggml-small.bin differs from whisper.cpp's official tool" }
           Copy-Item WHISPER-MODEL-LICENSE.txt model\
           "$b  SWYF-Speech-Model-small-q8.bin" | Out-File -Encoding ascii model\SHA256SUMS-model.txt
