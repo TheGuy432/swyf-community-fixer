@@ -478,13 +478,12 @@ static partial class Fixer
         sb.AppendLine("Call language: " + (s.CallLanguage ?? "?") + ", speech recognition setting: " + (string.IsNullOrEmpty(s.Provider) ? "Automatic" : s.Provider));
         string launch = r != null ? r.Launch : s.Launch;
         sb.AppendLine("Launch options: " + (string.IsNullOrEmpty(launch) ? "(none)" : launch));
+        // What is installed now, read from the game folder again (a step can refuse, e.g. the bigger model on a slow PC).
+        Session now = s;
+        if (r != null) { try { now = Detect(s.GameDir); } catch { } }
         var on = new List<string>();
-        foreach (Item it in s.Items)
-        {
-            if (it.IsTest) continue;
-            bool installed = r != null && it.Available ? it.Wanted : it.Installed;
-            if (installed) on.Add(TEn("fixname." + it.Key));
-        }
+        foreach (Item it in now.Items)
+            if (!it.IsTest && it.Installed) on.Add(TEn("fixname." + it.Key));
         sb.AppendLine("Fixer options on: " + (on.Count > 0 ? string.Join(", ", on.ToArray()) : "none"));
         if (r != null && r.Probe != null)
         {
@@ -504,7 +503,7 @@ static partial class Fixer
     static string ReportBench(BenchResult b)
     {
         if (b == null) return "not tested";
-        if (b.Outcome != BenchOutcome.Ok) return b.Outcome.ToString().ToLowerInvariant();
+        if (b.Outcome != BenchOutcome.Ok) return b.Outcome.ToString().ToLowerInvariant() + (b.Detail != "" ? " (" + b.Detail + ")" : "");
         string t = Secs(b.RunMs) + " s (load " + Secs(b.LoadMs) + " s";
         if (b.EncodeMs >= 0) t += ", encoder " + Secs(b.EncodeMs) + " s";
         return t + ")";

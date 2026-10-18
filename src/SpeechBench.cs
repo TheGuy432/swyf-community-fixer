@@ -93,7 +93,7 @@ static partial class Fixer
             string[] p = simulate.Split('/');
             string ms = gpu ? p[0] : p[p.Length - 1];
             if (ms == "hang") { Console.WriteLine("STAGE load"); Console.Out.Flush(); System.Threading.Thread.Sleep(-1); }
-            Console.WriteLine("LOADMS 800"); Console.WriteLine("RUNMS " + ms); Console.WriteLine("RUNMS " + ms); Console.WriteLine("TEXT simulated");
+            Console.WriteLine("LOADMS 800"); Console.WriteLine("RUNMS " + ms); Console.WriteLine("RUNMS " + ms); Console.WriteLine("TEXT " + Convert.ToBase64String(Encoding.UTF8.GetBytes("simulated")));
             return 0;
         }
 #endif
@@ -167,8 +167,8 @@ static partial class Fixer
         var text = new StringBuilder();
         int n = nSeg(ctx);
         for (int i = 0; i < n; i++) text.Append(Utf8(segText(ctx, i)));
-        Console.OutputEncoding = new UTF8Encoding(false);
-        Console.WriteLine("TEXT " + text.ToString().Trim().Replace('\n', ' '));
+        // Base64, so no console code page is involved (setting Console.OutputEncoding throws without a console window).
+        Console.WriteLine("TEXT " + Convert.ToBase64String(Encoding.UTF8.GetBytes(text.ToString().Trim())));
         freeCtx(ctx);
         Marshal.FreeHGlobal(samples);
         Marshal.FreeHGlobal(langPtr);
@@ -325,13 +325,18 @@ static partial class Fixer
                     if (f.Length == 3 && int.TryParse(f[0], out total) && int.TryParse(f[1], out enc) && int.TryParse(f[2], out dec)
                         && (r.RunMs < 0 || total <= r.RunMs)) { r.EncodeMs = enc; r.DecodeMs = Math.Max(0, total - enc); }
                 }
-                else if (l.StartsWith("TEXT ")) r.Text = l.Substring(5);
+                else if (l.StartsWith("TEXT ")) { try { r.Text = Encoding.UTF8.GetString(Convert.FromBase64String(l.Substring(5))); } catch { } }
+                else if (l.StartsWith("BENCHERROR ")) r.Detail = l.Substring(11);
             }
             if (!exited) { r.Outcome = BenchOutcome.Froze; r.Detail = stage; }
-            else if (p.ExitCode == 0 && r.RunMs >= 0) r.Outcome = BenchOutcome.Ok;
+            else if (r.RunMs >= 0) r.Outcome = BenchOutcome.Ok;   // timings came through; a problem while closing doesn't matter
             else if (p.ExitCode == 7) r.Outcome = BenchOutcome.NoClip;
-            else if (p.ExitCode == 3 || p.ExitCode == 5 || p.ExitCode == 6) { r.Outcome = BenchOutcome.Failed; r.Detail = text.Trim(); }
-            else { r.Outcome = BenchOutcome.Crashed; r.Detail = "0x" + p.ExitCode.ToString("X"); }
+            else if (p.ExitCode == 3 || p.ExitCode == 4 || p.ExitCode == 5 || p.ExitCode == 6)
+            {
+                r.Outcome = BenchOutcome.Failed;   // 4 = an error in the test program itself (BENCHERROR line)
+                if (r.Detail == "") r.Detail = LastLine(text);
+            }
+            else { r.Outcome = BenchOutcome.Crashed; r.Detail = "0x" + p.ExitCode.ToString("X") + (stage != "" ? ", " + stage : ""); }
         }
         return r;
     }
@@ -406,6 +411,12 @@ static partial class Fixer
     static string Split(BenchResult b)
     {
         return b.EncodeMs >= 0 && b.DecodeMs >= 0 ? " " + T("bench.split", Secs(b.EncodeMs), Secs(b.DecodeMs)) : "";
+    }
+
+    static string LastLine(string text)
+    {
+        string[] lines = text.Trim().Split('\n');
+        return lines.Length == 0 ? "" : lines[lines.Length - 1].Trim();
     }
 
     static string Secs(int ms) { return (ms / 1000.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture); }

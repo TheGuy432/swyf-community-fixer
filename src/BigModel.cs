@@ -221,7 +221,7 @@ static partial class Fixer
             case BenchOutcome.Froze: return T("core.froze");
             case BenchOutcome.Crashed: return T("core.crashed") + (b.Detail != "" ? " (" + b.Detail + ")" : "");
             case BenchOutcome.NoClip: return T("bench.no_clip_short");
-            default: return T("bench.failed_short");
+            default: return T("bench.failed_short") + (b.Detail != "" ? " (" + b.Detail + ")" : "");
         }
     }
 }
