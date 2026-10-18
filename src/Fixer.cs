@@ -1,4 +1,4 @@
-﻿// SWYF Speech Fixer v4.5 (UNOFFICIAL) - for Scam With Your Friends
+﻿// SWYF Community Fixer v4.5 (UNOFFICIAL) - for Scam With Your Friends
 // One tool for the community fixes. Double-click: a window to pick fixes (Gui.cs). --console: the same in text mode.
 //   1. Old CPU fix (CPUs without AVX2, game build 0.1.71)
 //   2. Speech speed-up (8-bit speech model + listening window sized to the phrase; 0.1.69 - 0.1.74 and the
@@ -26,6 +26,10 @@ static partial class Fixer
     const string GameFolderName = "Scam With Your Friends";
     const string GameExe = "Scam With Your Friends.exe";
     const string PrefsKey = @"Software\Jatater Worldwide\Scam With Your Friends";
+    // Where players ask about this tool: Tiger's fixer thread in the game's Discord (not the developers'
+    // support threads - the fixer isn't made or supported by the developers).
+    const string ModThreadUrl = "https://discord.com/channels/1406416808700940399/1560834677529514055";
+    const string ReleasesUrl = "https://github.com/TheGuy432/swyf-community-fixer/releases/latest";
 
     [DllImport("kernel32.dll")]
     static extern bool IsProcessorFeaturePresent(uint feature);
@@ -54,6 +58,15 @@ static partial class Fixer
                 try { return ProbeMain(dir, sim); }
                 catch (Exception e) { Console.WriteLine("PROBEERROR " + e.Message); return 4; }
             }
+            if (a == "--speech-bench" && i + 7 < args.Length)
+            {
+                string sim = null;
+#if SWYF_TEST
+                foreach (string x in args) if (x.StartsWith("--simulate=")) sim = x.Substring(11);
+#endif
+                try { return BenchMain(args[i + 1], args[i + 2], args[i + 3], args[i + 4], args[i + 5] == "1", int.Parse(args[i + 6]), args[i + 7] == "1", sim); }
+                catch (Exception e) { Console.WriteLine("BENCHERROR " + e.Message); return 4; }
+            }
             if (a == "--convert" && i + 2 < args.Length) // test hook (used by the GitHub build check)
             {
                 EnsureConsole();
@@ -70,6 +83,9 @@ static partial class Fixer
             if (a.StartsWith("--assume-lang=")) { assumeLanguage = a.Substring(14); continue; }
             if (a.StartsWith("--assume-provider=")) { assumeProvider = a.Substring(18); continue; }
             if (a.StartsWith("--assume-layers=")) { assumeLayers = a.Substring(16); continue; }
+            if (a.StartsWith("--simulate-bench=")) { simulateBench = a.Substring(17); continue; }
+            if (a.StartsWith("--assume-ram=")) { assumeRamMb = int.Parse(a.Substring(13)); continue; }
+            if (a.StartsWith("--assume-model-dir=")) { assumeModelDir = a.Substring(19); continue; }
             if (a.StartsWith("--test-")) { guiTest.Add(a); continue; }
 #endif
             if (a.StartsWith("--lang=")) lang = a.Substring(7).ToLowerInvariant();
@@ -86,7 +102,7 @@ static partial class Fixer
 
         EnsureConsole();
         try { Console.OutputEncoding = new UTF8Encoding(false); } catch { }
-        try { Console.Title = "SWYF Speech Fixer v" + Version; } catch { }
+        try { Console.Title = "SWYF Community Fixer v" + Version; } catch { }
         Banner();
         int code;
         try { code = Run(gameDir, uninstallFlag); }
@@ -111,7 +127,7 @@ static partial class Fixer
     static void Banner()
     {
         Line("==============================================================");
-        Line(" SWYF Speech Fixer v" + Version + " " + T("main.unofficial"));
+        Line(" SWYF Community Fixer v" + Version + " " + T("main.unofficial"));
         Line(" " + T("main.fixes_speech_to_text_and"));
         Line(" " + T("main.not_made_or_supported_by"));
         Line("==============================================================");
@@ -166,7 +182,8 @@ static partial class Fixer
             return 1;
         }
         string modelDir = Path.Combine(gameDir, WhisperRel), dll = Path.Combine(gameDir, WhisperDllRel);
-        if (uninstallFlag) { DisableOldBepInEx(gameDir); return UndoAll(gameDir, modelDir, dll); }
+        if (uninstallFlag) { DisableOldBepInEx(gameDir); return UndoAll(gameDir, modelDir, dll); }   // undo never needs the disclaimer
+        if (!ConsoleDisclaimer()) return 0;
 
         Session s = Detect(gameDir);
         Line((T("main.processor_avx") + " ") + YesNo(s.HasAvx) + ", AVX2 " + YesNo(s.HasAvx2) + ", "
@@ -220,7 +237,7 @@ static partial class Fixer
         if (r.Reason != CpuReason.None && !r.HasCpuOption)
         {
             Line("");
-            LaunchOptionPrompt(r.Launch, CpuReasonText(r.Reason, s));
+            LaunchOptionPrompt(r.Launch, CpuReasonText(r.Reason, s, r));
             if (r.KeepHint)
             {
                 Wrapped("  ", T("main.with_whisper_cpu_english_speech"));
@@ -235,6 +252,8 @@ static partial class Fixer
         else foreach (string t in tips) Wrapped("  ", t);
 
         Line("");
+        Line(T("main.report_intro"));
+        Line(BuildReport(s, r));
         Line(T("main.all_done"));
         Line(T("main.run_this_tool_again_any"));
         Line(T("main.game_update_or_verify_integrity"));
@@ -302,6 +321,7 @@ static partial class Fixer
         Line("");
         bool ok = true;
         if (!UninstallCpuFix(gameDir)) { ok = false; Line(T("main.could_not_restore_old_cpu")); }
+        if (UninstallBigModel(modelDir) != 0) ok = false;   // before the speed-up: it restores what was there before it
         if (UninstallModels(modelDir) != 0) ok = false;
         if (UninstallDll(dll) != 0) ok = false;
         if (UninstallVoiceFix(gameDir) != 0) ok = false;

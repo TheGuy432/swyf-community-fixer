@@ -20,21 +20,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build SWYF-Speech-Fixer.exe
+      - name: Build SWYF-Community-Fixer.exe
         shell: cmd
         run: build.cmd
 
       - name: Write SHA-256 checksum
         shell: pwsh
         run: |
-          $h = (Get-FileHash dist\SWYF-Speech-Fixer.exe -Algorithm SHA256).Hash.ToLower()
-          "$h  SWYF-Speech-Fixer.exe" | Out-File -Encoding ascii dist\SHA256SUMS.txt
+          $h = (Get-FileHash dist\SWYF-Community-Fixer.exe -Algorithm SHA256).Hash.ToLower()
+          "$h  SWYF-Community-Fixer.exe" | Out-File -Encoding ascii dist\SHA256SUMS.txt
           Get-Content dist\SHA256SUMS.txt
-          "### SWYF-Speech-Fixer.exe SHA-256`n`n``$h``" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          "### SWYF-Community-Fixer.exe SHA-256`n`n``$h``" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SWYF-Speech-Fixer
+          name: SWYF-Community-Fixer
           path: dist/
 
       - name: Attach to the release
@@ -42,7 +42,7 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist\SWYF-Speech-Fixer.exe dist\SHA256SUMS.txt --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" dist\SWYF-Community-Fixer.exe dist\SHA256SUMS.txt --clobber
 
   # Proves the speech-model conversion produces exactly the same file as whisper.cpp's own official
   # "quantize" tool, on a full-size test model (random weights, real tensor layout).
@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: SWYF-Speech-Fixer
+          name: SWYF-Community-Fixer
           path: dist
 
       - name: Get whisper.cpp v1.7.5 (the version the game uses)
@@ -83,7 +83,7 @@ jobs:
             python tools/genmodel.py "whisper.cpp/models/for-tests-ggml-$m.bin" "test-$m.bin" 1
             & $quantize "test-$m.bin" "official-$m.bin" q8_0 | Out-Null
             # the .exe is a window app, so wait for it explicitly
-            $p = Start-Process -FilePath dist\SWYF-Speech-Fixer.exe -ArgumentList "--convert","test-$m.bin","ours-$m.bin" -Wait -PassThru -NoNewWindow
+            $p = Start-Process -FilePath dist\SWYF-Community-Fixer.exe -ArgumentList "--convert","test-$m.bin","ours-$m.bin" -Wait -PassThru -NoNewWindow
             if ($p.ExitCode -ne 0) { throw "Conversion of $m failed (exit $($p.ExitCode))" }
             $a = (Get-FileHash "official-$m.bin").Hash
             $b = (Get-FileHash "ours-$m.bin").Hash
@@ -91,3 +91,39 @@ jobs:
             if ($a -ne $b) { throw "Conversion of $m differs from whisper.cpp's official tool" }
           }
           "Model conversion is byte-identical to whisper.cpp's official quantize tool." | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      # The bigger speech model offered (experimental) for languages other than English: OpenAI's Whisper "small" in
+      # whisper.cpp format, converted to 8-bit with the fixer's own converter and checked against the official tool.
+      - name: Build the bigger speech model (Whisper small, 8-bit)
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin" -OutFile ggml-small.bin
+          $sha1 = (Get-FileHash ggml-small.bin -Algorithm SHA1).Hash.ToLower()
+          "ggml-small.bin SHA-1 $sha1"
+          if ($sha1 -ne "55356645c2b361a969dfd0ef2c5a50d530afd8d5") { throw "ggml-small.bin is not the official file (SHA-1 $sha1)" }
+          $quantize = (Get-ChildItem wbuild -Recurse -Filter quantize.exe | Select-Object -First 1).FullName
+          & $quantize ggml-small.bin official-small-q8.bin q8_0 | Out-Null
+          New-Item -ItemType Directory model | Out-Null
+          $p = Start-Process -FilePath dist\SWYF-Community-Fixer.exe -ArgumentList "--convert","ggml-small.bin","model\SWYF-Speech-Model-small-q8.bin" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Conversion of ggml-small.bin failed (exit $($p.ExitCode))" }
+          $a = (Get-FileHash official-small-q8.bin).Hash.ToLower()
+          $b = (Get-FileHash model\SWYF-Speech-Model-small-q8.bin).Hash.ToLower()
+          "small  official=$a  ours=$b"
+          Write-Host "::notice title=Speech model SHA-256::SWYF-Speech-Model-small-q8.bin $b (size $((Get-Item model\SWYF-Speech-Model-small-q8.bin).Length) bytes)"
+          if ($a -ne $b) { throw "Conversion of ggml-small.bin differs from whisper.cpp's official tool" }
+          Copy-Item WHISPER-MODEL-LICENSE.txt model\
+          "$b  SWYF-Speech-Model-small-q8.bin" | Out-File -Encoding ascii model\SHA256SUMS-model.txt
+          "### SWYF-Speech-Model-small-q8.bin SHA-256`n`n``$b```n`nIdentical to whisper.cpp's official quantize output of ggml-small.bin (SHA-1 55356645c2b361a969dfd0ef2c5a50d530afd8d5)." | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SWYF-Speech-Model
+          path: model/
+
+      - name: Attach the speech model to the release
+        if: github.event_name == 'release'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" model\SWYF-Speech-Model-small-q8.bin model\SHA256SUMS-model.txt model\WHISPER-MODEL-LICENSE.txt --clobber

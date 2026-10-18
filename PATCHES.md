@@ -171,3 +171,33 @@ It reads `Steam\userdata\*\config\localconfig.vdf` to see whether `-whisper-cpu`
 
 Reads the Unity PlayerPrefs value `KolkataOS.BanditCam.Watermark` from
 `HKEY_CURRENT_USER\Software\Jatater Worldwide\Scam With Your Friends`, only to say whether the watermark is already off.
+
+## 8. EXPERIMENTAL: bigger speech model (`StreamingAssets\Whisper\ggml-base.bin`)
+
+Off unless the player ticks it. The game recognises every language except English with Whisper *base* (`ggml-base.bin`, 148 MB).
+This puts Whisper *small* in its place: whisper.cpp's official `ggml-small.bin` (SHA-1 `55356645c2b361a969dfd0ef2c5a50d530afd8d5`)
+converted to `q8_0` by the converter in 2a. GitHub Actions builds it, checks it against whisper.cpp's own `quantize` output,
+and attaches it to each release as `SWYF-Speech-Model-small-q8.bin` (~250 MB) with its SHA-256. The tool looks for that file next
+to itself and in the user's Downloads folder; it downloads nothing.
+
+Only offered when all of these hold: the call language (`Kolkata.CallLanguage`) isn't English; speech runs on the processor
+(`-whisper-cpu`, or a graphics card on the game's CPU-speech list); AVX2, at least 8 threads and 12 GB of memory. Before
+installing it, the tool runs the speech speed test (section 9) on the processor with the model, capped to 64 tokens and no
+temperature fallback (the cost of a normal sentence), and installs only if a 4-second sentence takes at most 2.5 s. It also
+installs the listening window (2b), which the bigger model needs to be usable. The previous `ggml-base.bin` is kept as
+`ggml-base.bin.bigmodel-backup`; undo moves it back. The speed-up's own undo leaves the bigger model alone.
+
+## 9. Speech speed test (no files changed)
+
+The tool starts itself again as a child process (`--speech-bench`). The child loads the game's own `ggml-base.dll`, `ggml.dll`
+and `libwhisper.dll` from `Plugins\x86_64`, loads the speech model from memory with `whisper_init_from_buffer_with_params`
+(like the game), and runs `whisper_full` twice on 4 seconds of one of the game's own caller voice clips
+(`StreamingAssets\Callers\Defaults\*\voice.wav`, resampled to 16 kHz), with the game's settings: greedy decoding, no context,
+the player's call language, whisper.cpp's default thread count, and the game's `audio_ctx`. For the graphics card run
+`KOLKATA_WHISPER_CPU_ONLY` is removed and `use_gpu` is on; for the processor run it is set, as with `-whisper-cpu`. The child
+prints the load time, the time of each run and whisper.cpp's encoder time (`whisper_get_timings`); the faster run counts.
+A graphics card run that freezes is stopped after 60 s.
+
+If the graphics card is more than twice as slow (and over 3 s), freezes or crashes, the tool asks for `-whisper-cpu`. If it is
+clearly faster, the language-based `-whisper-cpu` advice is dropped, and players who have the option are told they may try
+without it.

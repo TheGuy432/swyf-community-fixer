@@ -176,7 +176,7 @@ static partial class Fixer
         {
             var g = e.Graphics; Ui.Hq(g); g.Clear(Ui.Header);
             Ui.Waveform(g, Ui.Sf(26), Ui.Sf(37), Ui.Scale, Ui.Mint);
-            using (var f = Ui.F(20, FontStyle.Bold)) g.DrawString("SWYF Speech Fixer", f, Brushes.White, Ui.Sf(76), Ui.Sf(13));
+            using (var f = Ui.F(20, FontStyle.Bold)) g.DrawString("SWYF Community Fixer", f, Brushes.White, Ui.Sf(76), Ui.Sf(13));
             // language picker
             using (var f = Ui.F(13, FontStyle.Bold))
             {
@@ -458,7 +458,7 @@ static partial class Fixer
             this.test = test ?? new List<string>();
             using (Graphics g = CreateGraphics()) Ui.Scale = Math.Max(1f, g.DpiX / 96f);
             AutoScaleMode = AutoScaleMode.None;
-            Text = "SWYF Speech Fixer";
+            Text = "SWYF Community Fixer";
             Font = Ui.F(14);
             BackColor = Ui.Bg;
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -484,6 +484,8 @@ static partial class Fixer
                 t.Start();
             }
 
+            string expand = TestValue("--test-expand=");
+            if (expand != null) foreach (string k in expand.Split(',')) expanded.Add(k);
             this.gameDir = gameDir;
             Start();
         }
@@ -503,6 +505,9 @@ static partial class Fixer
             t.Tick += delegate
             {
                 t.Stop();
+                string tick = TestValue("--test-tick=");
+                if (tick != null && session != null)
+                    foreach (string k in tick.Split(',')) foreach (Item it in session.Items) if (it.Key == k && it.Available) it.Wanted = true;
                 if (click == "apply" && session != null) StartApply(false);
                 else if (click == "undo" && session != null) ShowUndoConfirm();
                 else if (click == "undo-yes" && session != null) StartApply(true);
@@ -599,6 +604,7 @@ static partial class Fixer
         // ---- start: find the game, check it isn't running, detect ----
         void Start()
         {
+            if (!DisclaimerAccepted()) { ShowDisclaimer(); return; }
             if (gameDir == null) gameDir = FindGameDir();
             if (!IsGameDir(gameDir)) { ShowNotFound(); return; }
             if (GameRunning()) { ShowRunning(); return; }
@@ -610,6 +616,29 @@ static partial class Fixer
             catch (Exception e) { error = e; session = null; ShowDone(); return; }
             finally { Cursor = Cursors.Default; }
             ShowMain();
+        }
+
+        // First run: who made this tool and that the developers don't support it. Must be accepted to go on.
+        void ShowDisclaimer()
+        {
+            rebuild = ShowDisclaimer;
+            Begin();
+            int y = Ui.S(20);
+            var c = new Card { Left = Ui.S(20), Top = y, Width = Ui.S(720), Fill = Ui.WarnSoft, Stripe = Ui.WarnLine };
+            int cy = Ui.S(18);
+            cy = Text_(c, T("disclaimer.title"), 20, cy, 680, 17, FontStyle.Bold, Ui.Ink) + Ui.S(10);
+            foreach (string p in DisclaimerPoints())
+            {
+                Text_(c, "•", 22, cy, 12, 14, FontStyle.Regular, Ui.Ink);
+                cy = Text_(c, p, 40, cy, 660, 14, FontStyle.Regular, Ui.Ink) + Ui.S(8);
+            }
+            cy = ThreadLink(c, 20, cy + Ui.S(2), 680) + Ui.S(12);
+            c.Height = cy;
+            content.Controls.Add(c);
+            var accept = new FlatBtn(T("disclaimer.accept"), true).Fit(220);
+            accept.Click += delegate { AcceptDisclaimer(); Start(); };
+            Buttons(null, CloseButton(false), accept);
+            End(c.Bottom + Ui.S(16));
         }
 
         void ShowNotFound()
@@ -699,6 +728,7 @@ static partial class Fixer
         }
 
         FlatBtn applyBtn;
+        readonly HashSet<string> expanded = new HashSet<string>();   // fixes whose "What does this do?" is open
 
         void ShowMain()
         {
@@ -715,6 +745,7 @@ static partial class Fixer
 
             var exp = new List<Item>();
             foreach (Item it in session.Items) if (it.Experimental && it.Available) exp.Add(it);
+            foreach (Item it in session.Items) if (it.Experimental && !it.Available && it.ShowAlways) exp.Add(it);
             if (exp.Count > 0) y = RowsCard(exp, y, Ui.WarnSoft, Ui.WarnLine, "⚠  " + T("ui.experimental")) + Ui.S(12);
 
             bool anyUntested = false;
@@ -722,6 +753,8 @@ static partial class Fixer
             if (anyUntested) y = Text_(content, T("ui.untested_note"), 22, y, 716, 12.5f, FontStyle.Regular, Ui.Muted) + Ui.S(4);
             string tn = TranslatorNote();
             if (tn != "") y = Text_(content, tn, 22, y, 716, 12.5f, FontStyle.Italic, Ui.Muted) + Ui.S(4);
+            y = Text_(content, T("ui.disclaimer"), 22, y + Ui.S(4), 716, 12.5f, FontStyle.Regular, Ui.Muted) + Ui.S(2);
+            y = ThreadLink(content, 22, y + Ui.S(2)) + Ui.S(4);
 
             var undo = new FlatBtn(T("ui.undo_all"), false).Fit(150);
             undo.Click += delegate { ShowUndoConfirm(); };
@@ -744,6 +777,7 @@ static partial class Fixer
                 row.Changed = UpdateApply;
                 c.Controls.Add(row);
                 cy += row.Height;
+                cy = RowExtras(c, items[i], cy);
                 if (i < items.Count - 1)
                 {
                     c.Controls.Add(new Panel { Left = Ui.S(48), Top = cy, Width = Ui.S(650), Height = 1, BackColor = Ui.Line });
@@ -753,6 +787,89 @@ static partial class Fixer
             c.Height = cy + Ui.S(6);
             content.Controls.Add(c);
             return c.Bottom;
+        }
+
+        // Under each fix: buttons for what the player still has to do, and "What does this do?" with a short explanation.
+        int RowExtras(Card c, Item it, int cy)
+        {
+            int top = cy - Ui.S(4);
+            int x = Ui.S(48);
+            if (it.NeedDownload)
+            {
+                var b = new FlatBtn(T("ui.open_download"), true).Fit(160);
+                b.Height = Ui.S(30); b.Left = x; b.Top = top;
+                b.Click += delegate { OpenUrl(ReleasesUrl); };
+                c.Controls.Add(b); b.BringToFront(); x = b.Right + Ui.S(10);
+            }
+            if (it.NeedCpuOption)
+            {
+                var copy = new FlatBtn(T("ui.copy_cpu_option"), !it.NeedDownload).Fit(170);
+                copy.Height = Ui.S(30); copy.Left = x; copy.Top = top;
+                copy.Click += delegate { copy.Text = CopyText("-whisper-cpu") ? T("ui.copied") : T("ui.copy_failed"); };
+                var steam = new FlatBtn(T("ui.open_steam"), false).Fit(120);
+                steam.Height = Ui.S(30); steam.Left = copy.Right + Ui.S(10); steam.Top = top;
+                steam.Click += delegate { OpenUrl("steam://open/games"); };
+                c.Controls.Add(copy); c.Controls.Add(steam); copy.BringToFront(); steam.BringToFront();
+                x = steam.Right + Ui.S(10);
+            }
+            if (it.NeedDownload || it.NeedCpuOption)
+            {
+                // After downloading the file or adding the launch option: look again without restarting the tool.
+                var again = new FlatBtn(T("ui.check_again"), false).Fit(120);
+                again.Height = Ui.S(30);
+                again.Left = x;
+                if (again.Right > Ui.S(700)) { top += Ui.S(38); again.Left = Ui.S(48); }   // long translations: next line
+                again.Top = top;
+                again.Click += delegate { session = null; Start(); };
+                c.Controls.Add(again); again.BringToFront();
+                top += Ui.S(30) + Ui.S(8);
+            }
+
+            bool open = expanded.Contains(it.Key);
+            var link = new Label { Text = T("ui.what_does_this_do") + (open ? " ▴" : " ▾"), Font = Ui.F(12.5f), ForeColor = Ui.Blue, AutoSize = true, MaximumSize = new Size(Ui.S(650), 0), Left = Ui.S(48), Top = top, Cursor = Cursors.Hand, BackColor = Color.Transparent };
+            string key = it.Key;
+            link.Click += delegate
+            {
+                if (!expanded.Remove(key)) expanded.Add(key);
+                int scroll = -content.AutoScrollPosition.Y;
+                ShowMain();
+                content.AutoScrollPosition = new Point(0, scroll);
+            };
+            c.Controls.Add(link);
+            link.BringToFront();
+            int y = top + Ui.S(22);
+            if (open)
+            {
+                y = Text_(c, T("ui.info_fixes") + " " + T("info." + key + ".fixes"), 48, y, 650, 12.5f, FontStyle.Regular, Ui.Muted);
+                y = Text_(c, T("ui.info_changes") + " " + T("info." + key + ".changes"), 48, y + Ui.S(2), 650, 12.5f, FontStyle.Regular, Ui.Muted);
+                y = Text_(c, T("ui.info_undo") + " " + T("info." + key + ".undo"), 48, y + Ui.S(2), 650, 12.5f, FontStyle.Regular, Ui.Muted);
+            }
+            return y + Ui.S(8);
+        }
+
+        // "Questions about this tool? Tiger's fixer thread" link (not the developers' support).
+        int ThreadLink(Control parent, int x, int y) { return ThreadLink(parent, x, y, 716); }
+        int ThreadLink(Control parent, int x, int y, int w)
+        {
+            string text = T("ui.thread_link");
+            Font f = Ui.F(12.5f);
+            int h = Ui.TextHeight(text, f, Ui.S(w)) + Ui.S(2);
+            var l = new Label { Text = text, Font = f, ForeColor = Ui.Blue, AutoSize = false, Width = Ui.S(w), Height = h, Left = Ui.S(x), Top = y, Cursor = Cursors.Hand, BackColor = Color.Transparent, UseMnemonic = false };
+            l.Click += delegate { OpenUrl(ModThreadUrl); };
+            parent.Controls.Add(l);
+            return y + h;
+        }
+
+        // The clipboard is often briefly locked by other programs (Discord, clipboard managers): retry, and say so if it fails.
+        static bool CopyText(string text)
+        {
+            try { Clipboard.SetDataObject(text, true, 10, 100); return true; }
+            catch { return false; }
+        }
+
+        static void OpenUrl(string url)
+        {
+            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
         }
 
         int ChangeCount()
@@ -904,7 +1021,7 @@ static partial class Fixer
             };
             copy.Click += delegate
             {
-                try { Clipboard.SetText(log.ToString()); copy.Text = T("ui.copied"); } catch { }
+                copy.Text = CopyText(log.ToString()) ? T("ui.copied") : T("ui.copy_failed");
             };
             return y + Ui.S(26) + (open ? Ui.S(170) : 0);
         }
@@ -987,14 +1104,28 @@ static partial class Fixer
                     : StatusCard(y, Ui.AccentSoft, Ui.AccentLine, StepState.Done, Ui.Accent, title, T("ui.done_text"));
                 if (result != null && result.Reason != CpuReason.None && !result.HasCpuOption) y = LaunchOptionCard(y + Ui.S(14));
                 else if (result != null && result.GpuProblem) y = InfoCard(y + Ui.S(14), T("ui.cpu_option_already"), LayerNote());
+                if (result != null && result.BenchLines != null && result.BenchLines.Count > 0)
+                    y = InfoCard(y + Ui.S(14), T("ui.bench_title"), string.Join("\n", result.BenchLines.ToArray()));
                 if (result != null && result.Probe != null && result.Probe.Outcome == ProbeOutcome.LoadFailed)
                     y = InfoCard(y + Ui.S(14), T("ui.loadfail_title"), T("ui.loadfail_text", result.Probe.Detail));
                 y = TipsCard(y + Ui.S(14));
             }
             y = DetailsToggle(y + Ui.S(14), error != null || (undoRun && undoCode != 0));
+            y = ThreadLink(content, 22, y + Ui.S(6));
             var again = new FlatBtn(T("ui.change_fixes"), false).Fit(150);
             again.Click += delegate { session = null; Start(); };
-            Buttons(again, CloseButton(true));
+            if (session != null && !undoRun)
+            {
+                var report = new FlatBtn(T("ui.copy_report"), false).Fit(190);
+                report.Click += delegate
+                {
+                    string text = null;
+                    try { text = BuildReport(session, result); } catch (Exception ex) { text = "SWYF Community Fixer " + Version + " report failed: " + ex.Message; }
+                    report.Text = CopyText(text) ? T("ui.copied") : T("ui.copy_failed");
+                };
+                Buttons(again, report, CloseButton(true));
+            }
+            else Buttons(again, CloseButton(true));
             End(y + Ui.S(10));
         }
 
@@ -1028,9 +1159,9 @@ static partial class Fixer
             int cy = Ui.S(14);
             cy = Text_(c, T("ui.one_more_step").ToUpperInvariant(), 20, cy, 600, 11.5f, FontStyle.Bold, Ui.Warn) + Ui.S(2);
             string title = result.Reason == CpuReason.GpuTest ? T("ui.launch_title")
-                : result.Reason == CpuReason.Language ? T("ui.launch_title_language") : T("ui.launch_title_speech");
+                : result.Reason == CpuReason.Language || result.Reason == CpuReason.Bench ? T("ui.launch_title_language") : T("ui.launch_title_speech");
             cy = Text_(c, title, 20, cy, 680, 16, FontStyle.Bold, Ui.Ink);
-            cy = Text_(c, CpuReasonText(result.Reason, session), 20, cy + Ui.S(2), 680, 13, FontStyle.Regular, Ui.Muted) + Ui.S(10);
+            cy = Text_(c, CpuReasonText(result.Reason, session, result), 20, cy + Ui.S(2), 680, 13, FontStyle.Regular, Ui.Muted) + Ui.S(10);
             string[] steps = { T("ui.launch_step1"), T("ui.launch_step2"), T("ui.launch_step3") };
             for (int i = 0; i < steps.Length; i++)
             {
@@ -1047,7 +1178,7 @@ static partial class Fixer
                     c.Controls.Add(code);
                     var copy = new FlatBtn(T("ui.copy"), true).Fit(80);
                     copy.Height = Ui.S(34); copy.Left = code.Right + Ui.S(10); copy.Top = cy;
-                    copy.Click += delegate { try { Clipboard.SetText("-whisper-cpu"); copy.Text = T("ui.copied"); } catch { } };
+                    copy.Click += delegate { copy.Text = CopyText("-whisper-cpu") ? T("ui.copied") : T("ui.copy_failed"); };
                     var steam = new FlatBtn(T("ui.open_steam"), false).Fit(120);
                     steam.Height = Ui.S(34); steam.Left = copy.Right + Ui.S(10); steam.Top = cy;
                     steam.Click += delegate { try { Process.Start(new ProcessStartInfo("steam://open/games") { UseShellExecute = true }); } catch { } };
@@ -1076,7 +1207,7 @@ static partial class Fixer
         {
             string intro;
             List<string> tips = Tips(session, result, out intro);
-            if (result != null && result.Probe != null && result.Probe.Outcome == ProbeOutcome.Passed && result.HasCpuOption)
+            if (result != null && result.Probe != null && result.Probe.Outcome == ProbeOutcome.Passed && result.HasCpuOption && result.BenchCpu == null)
                 tips.Insert(0, CpuOptionHelps(session) == CpuReason.None ? T("ui.tip_remove_cpu_option") : T("ui.tip_keep_cpu_option"));
             var c = new Card { Left = Ui.S(20), Top = y, Width = Ui.S(720) };
             int cy = Ui.S(14);
