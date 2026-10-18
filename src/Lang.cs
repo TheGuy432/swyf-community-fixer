@@ -82,6 +82,9 @@ static partial class Fixer
         }
     }
 
+    // English text, whatever language the window shows (for the Discord report).
+    static string TEn(string key) { string v; return EnLang.TryGetValue(key, out v) ? v : key; }
+
     static bool HasLanguage(string code) { return code != null && Langs.ContainsKey(code); }
 
     static void SetLanguage(string code)

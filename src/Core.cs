@@ -26,6 +26,7 @@ static partial class Fixer
         public bool Experimental;   // shown in the separate experimental box
         public bool IsTest;         // the graphics card test: changes no files
         public bool ShowAlways;     // experimental item shown even when not available (with its reason)
+        public bool NeedCpuOption, NeedDownload;   // what the player still has to do first (buttons in the window)
 
         public bool IsChange
         {
@@ -427,6 +428,8 @@ static partial class Fixer
         }
         else if (s.HasAvx) tips.Add(T("core.speak_after_caller_has_finished_2"));
         else tips.Add(T("core.your_cpu_can_t_run_2"));
+        if (s.Big != null && !s.Big.Available && (s.Big.NeedCpuOption || s.Big.NeedDownload))
+            tips.Add(T("core.tip_big", BigModelFile));
         bool moonshineInCard = r != null && r.Reason == CpuReason.Language && !r.HasCpuOption;   // already said there
         if (s.HasAvx && s.OwnFixes && s.CallLanguage != null && s.CallLanguage != "en" && IsMoonshineLanguage(s.CallLanguage)
             && s.Provider != "Moonshine" && !moonshineInCard)
@@ -459,5 +462,51 @@ static partial class Fixer
             return n.Length > 0 ? n : d;
         }
         return null;
+    }
+
+    // A short, English, copy-paste report for the fixer thread on Discord (what Tiger needs to help).
+    static string BuildReport(Session s, ApplyResult r)
+    {
+        var sb = new System.Text.StringBuilder();
+        Func<bool, string> yn = b => b ? "yes" : "no";
+        sb.AppendLine("SWYF Community Fixer " + Version + " report");
+        sb.AppendLine("Game: build " + (s.GameBuild ?? "unknown") + (s.OwnFixes ? " (has the 18 Oct fixes)" : ""));
+        string cpu = assumePc != null ? assumePc.Split('|')[0] : ShortCpuName();
+        sb.AppendLine("Processor: " + (cpu ?? "?") + ", " + s.Threads + " threads, AVX " + yn(s.HasAvx) + ", AVX2 " + yn(s.HasAvx2)
+                      + ", memory " + (s.RamMb > 0 ? (s.RamMb / 1024.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " GB" : "?"));
+        sb.AppendLine("Graphics: " + string.Join(", ", GraphicsCardNames().ToArray()) + (s.AmdNvidia ? " (AMD + NVIDIA)" : ""));
+        sb.AppendLine("Call language: " + (s.CallLanguage ?? "?") + ", speech recognition setting: " + (string.IsNullOrEmpty(s.Provider) ? "Automatic" : s.Provider));
+        string launch = r != null ? r.Launch : s.Launch;
+        sb.AppendLine("Launch options: " + (string.IsNullOrEmpty(launch) ? "(none)" : launch));
+        var on = new List<string>();
+        foreach (Item it in s.Items)
+        {
+            if (it.IsTest) continue;
+            bool installed = r != null && it.Available ? it.Wanted : it.Installed;
+            if (installed) on.Add(TEn("fixname." + it.Key));
+        }
+        sb.AppendLine("Fixer options on: " + (on.Count > 0 ? string.Join(", ", on.ToArray()) : "none"));
+        if (r != null && r.Probe != null)
+        {
+            string p = r.Probe.Outcome.ToString() + (r.Probe.GpuName != "" ? " on " + r.Probe.GpuName : "") + (r.Probe.Detail != "" ? " (" + r.Probe.Detail + ")" : "");
+            if (r.ProbeNoLayers != null) p += "; without Vulkan layers: " + r.ProbeNoLayers.Outcome;
+            sb.AppendLine("Graphics card test: " + p);
+            if (r.Layers != null && r.Layers.Count > 0) sb.AppendLine("Vulkan layers: " + string.Join(", ", r.Layers.ToArray()));
+        }
+        if (r != null && (r.BenchGpu != null || r.BenchCpu != null))
+        {
+            sb.AppendLine("Speed test (" + (s.CallLanguage ?? "en") + ", 4 s sentence): graphics card " + ReportBench(r.BenchGpu) + ", processor " + ReportBench(r.BenchCpu));
+        }
+        sb.AppendLine("Post this in Tiger's fixer thread: " + ModThreadUrl);
+        return sb.ToString();
+    }
+
+    static string ReportBench(BenchResult b)
+    {
+        if (b == null) return "not tested";
+        if (b.Outcome != BenchOutcome.Ok) return b.Outcome.ToString().ToLowerInvariant();
+        string t = Secs(b.RunMs) + " s (load " + Secs(b.LoadMs) + " s";
+        if (b.EncodeMs >= 0) t += ", encoder " + Secs(b.EncodeMs) + " s";
+        return t + ")";
     }
 }

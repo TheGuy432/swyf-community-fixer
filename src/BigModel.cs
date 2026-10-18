@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 static partial class Fixer
 {
     const string BigModelFile = "SWYF-Speech-Model-small-q8.bin";
-    const string BigModelSha256 = "";   // filled in from the GitHub build; empty = check the file's structure only
+    const string BigModelSha256 = "49c8fb02b65e6049d5fa6c04f81f53b867b5ec9540406812c643f177317f779f";   // from the GitHub build (verify-model-conversion)
     const string BigBackupSuffix = ".bigmodel-backup";
     const int BigMaxRunMs = 2500;       // at most 2.5 s for a 4 s sentence on the processor
     const int BigMinThreads = 8, BigMinRamMb = 12000;
@@ -94,8 +94,20 @@ static partial class Fixer
     {
         if (file == null) return T("big.status_download", BigModelFile);
         if (!IsBigModel(file)) return T("big.status_bad_file", BigModelFile);
-        if (BigModelSha256 != "" && Sha256(file) != BigModelSha256) return T("big.status_bad_file", BigModelFile);
+        if (CheckBigHash && Sha256(file) != BigModelSha256) return T("big.status_bad_file", BigModelFile);
         return null;
+    }
+
+    // Test builds can use a random-weights stand-in (SWYF_TEST_ANY_MODEL=1); release builds always check the hash.
+    static bool CheckBigHash
+    {
+        get
+        {
+#if SWYF_TEST
+            if (Environment.GetEnvironmentVariable("SWYF_TEST_ANY_MODEL") == "1") return false;
+#endif
+            return BigModelSha256 != "";
+        }
     }
 
     static string BigTarget(string modelDir) { return Path.Combine(modelDir, "ggml-base.bin"); }
@@ -109,13 +121,22 @@ static partial class Fixer
         bool otherLanguage = s.CallLanguage != null && s.CallLanguage != "en";
         big.ShowAlways = installed || (otherLanguage && s.HasAvx);
         string why = null;
+        big.NeedCpuOption = big.NeedDownload = false;
         if (!installed)
         {
             if (!otherLanguage) why = T("big.status_english");
             else if (!s.HasAvx2 || s.Threads < BigMinThreads || (s.RamMb > 0 && s.RamMb < BigMinRamMb)) why = T("big.status_pc", BigMinThreads, BigMinRamMb / 1000);
-            else if (!s.CpuSpeech) why = T("big.status_needs_cpu");
             else if (!IsDllOriginal(s.DllHash) && !IsDllPatched(s.DllHash)) why = T("core.not_available_for_this_game");
-            else why = BigModelProblem(s.BigFile);
+            else
+            {
+                // This PC could run it: say what's still missing, with buttons in the window.
+                string fileProblem = BigModelProblem(s.BigFile);
+                big.NeedCpuOption = !s.CpuSpeech;
+                big.NeedDownload = fileProblem != null;
+                if (big.NeedCpuOption && big.NeedDownload) why = T("big.status_needs_both", BigModelFile);
+                else if (big.NeedCpuOption) why = T("big.status_needs_cpu");
+                else why = fileProblem;
+            }
         }
         big.Available = installed || why == null;
         big.Status = installed ? T("big.status_installed") : why ?? T("big.status_off");
@@ -150,7 +171,7 @@ static partial class Fixer
         string tmp = target + ".bigmodel-tmp", bak = target + BigBackupSuffix;
         TryDelete(tmp);
         File.Copy(file, tmp);
-        if (!IsBigModel(tmp) || (BigModelSha256 != "" && Sha256(tmp) != BigModelSha256)) { TryDelete(tmp); throw new Exception("Copying the speech model failed; nothing was changed."); }
+        if (!IsBigModel(tmp) || (CheckBigHash && Sha256(tmp) != BigModelSha256)) { TryDelete(tmp); throw new Exception("Copying the speech model failed; nothing was changed."); }
         if (File.Exists(target))
         {
             if (File.Exists(bak)) File.Delete(target);   // the backup already holds the game's model

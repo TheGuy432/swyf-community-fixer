@@ -1,6 +1,6 @@
 SWYF-Speech-Model-small-q8.bin is OpenAI's Whisper "small" model, in whisper.cpp's file format
 (ggml-small.bin from https://huggingface.co/ggerganov/whisper.cpp), converted to 8-bit (q8_0) by
-SWYF Speech Fixer's own converter, which produces byte-for-byte the same file as whisper.cpp's quantize tool.
+SWYF Community Fixer's own converter, which produces byte-for-byte the same file as whisper.cpp's quantize tool.
 It was built by GitHub Actions from this repository; the build log shows every step and the checksums.
 
 The Whisper model weights are released by OpenAI under the MIT License:

@@ -1,4 +1,4 @@
-﻿// SWYF Speech Fixer v4.5 (UNOFFICIAL) - for Scam With Your Friends
+﻿// SWYF Community Fixer v4.5 (UNOFFICIAL) - for Scam With Your Friends
 // One tool for the community fixes. Double-click: a window to pick fixes (Gui.cs). --console: the same in text mode.
 //   1. Old CPU fix (CPUs without AVX2, game build 0.1.71)
 //   2. Speech speed-up (8-bit speech model + listening window sized to the phrase; 0.1.69 - 0.1.74 and the
@@ -26,6 +26,10 @@ static partial class Fixer
     const string GameFolderName = "Scam With Your Friends";
     const string GameExe = "Scam With Your Friends.exe";
     const string PrefsKey = @"Software\Jatater Worldwide\Scam With Your Friends";
+    // Where players ask about this tool: Tiger's fixer thread in the game's Discord (not the developers'
+    // support threads - the fixer isn't made or supported by the developers).
+    const string ModThreadUrl = "https://discord.com/channels/1406416808700940399/1560834677529514055";
+    const string ReleasesUrl = "https://github.com/TheGuy432/swyf-speech-fixer/releases/latest";
 
     [DllImport("kernel32.dll")]
     static extern bool IsProcessorFeaturePresent(uint feature);
@@ -98,7 +102,7 @@ static partial class Fixer
 
         EnsureConsole();
         try { Console.OutputEncoding = new UTF8Encoding(false); } catch { }
-        try { Console.Title = "SWYF Speech Fixer v" + Version; } catch { }
+        try { Console.Title = "SWYF Community Fixer v" + Version; } catch { }
         Banner();
         int code;
         try { code = Run(gameDir, uninstallFlag); }
@@ -123,7 +127,7 @@ static partial class Fixer
     static void Banner()
     {
         Line("==============================================================");
-        Line(" SWYF Speech Fixer v" + Version + " " + T("main.unofficial"));
+        Line(" SWYF Community Fixer v" + Version + " " + T("main.unofficial"));
         Line(" " + T("main.fixes_speech_to_text_and"));
         Line(" " + T("main.not_made_or_supported_by"));
         Line("==============================================================");
@@ -247,6 +251,8 @@ static partial class Fixer
         else foreach (string t in tips) Wrapped("  ", t);
 
         Line("");
+        Line(T("main.report_intro"));
+        Line(BuildReport(s, r));
         Line(T("main.all_done"));
         Line(T("main.run_this_tool_again_any"));
         Line(T("main.game_update_or_verify_integrity"));

@@ -176,7 +176,7 @@ static partial class Fixer
         {
             var g = e.Graphics; Ui.Hq(g); g.Clear(Ui.Header);
             Ui.Waveform(g, Ui.Sf(26), Ui.Sf(37), Ui.Scale, Ui.Mint);
-            using (var f = Ui.F(20, FontStyle.Bold)) g.DrawString("SWYF Speech Fixer", f, Brushes.White, Ui.Sf(76), Ui.Sf(13));
+            using (var f = Ui.F(20, FontStyle.Bold)) g.DrawString("SWYF Community Fixer", f, Brushes.White, Ui.Sf(76), Ui.Sf(13));
             // language picker
             using (var f = Ui.F(13, FontStyle.Bold))
             {
@@ -458,7 +458,7 @@ static partial class Fixer
             this.test = test ?? new List<string>();
             using (Graphics g = CreateGraphics()) Ui.Scale = Math.Max(1f, g.DpiX / 96f);
             AutoScaleMode = AutoScaleMode.None;
-            Text = "SWYF Speech Fixer";
+            Text = "SWYF Community Fixer";
             Font = Ui.F(14);
             BackColor = Ui.Bg;
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -484,6 +484,8 @@ static partial class Fixer
                 t.Start();
             }
 
+            string expand = TestValue("--test-expand=");
+            if (expand != null) foreach (string k in expand.Split(',')) expanded.Add(k);
             this.gameDir = gameDir;
             Start();
         }
@@ -702,6 +704,7 @@ static partial class Fixer
         }
 
         FlatBtn applyBtn;
+        readonly HashSet<string> expanded = new HashSet<string>();   // fixes whose "What does this do?" is open
 
         void ShowMain()
         {
@@ -726,6 +729,8 @@ static partial class Fixer
             if (anyUntested) y = Text_(content, T("ui.untested_note"), 22, y, 716, 12.5f, FontStyle.Regular, Ui.Muted) + Ui.S(4);
             string tn = TranslatorNote();
             if (tn != "") y = Text_(content, tn, 22, y, 716, 12.5f, FontStyle.Italic, Ui.Muted) + Ui.S(4);
+            y = Text_(content, T("ui.disclaimer"), 22, y + Ui.S(4), 716, 12.5f, FontStyle.Regular, Ui.Muted) + Ui.S(2);
+            y = ThreadLink(content, 22, y + Ui.S(2)) + Ui.S(4);
 
             var undo = new FlatBtn(T("ui.undo_all"), false).Fit(150);
             undo.Click += delegate { ShowUndoConfirm(); };
@@ -748,6 +753,7 @@ static partial class Fixer
                 row.Changed = UpdateApply;
                 c.Controls.Add(row);
                 cy += row.Height;
+                cy = RowExtras(c, items[i], cy);
                 if (i < items.Count - 1)
                 {
                     c.Controls.Add(new Panel { Left = Ui.S(48), Top = cy, Width = Ui.S(650), Height = 1, BackColor = Ui.Line });
@@ -757,6 +763,66 @@ static partial class Fixer
             c.Height = cy + Ui.S(6);
             content.Controls.Add(c);
             return c.Bottom;
+        }
+
+        // Under each fix: buttons for what the player still has to do, and "What does this do?" with a short explanation.
+        int RowExtras(Card c, Item it, int cy)
+        {
+            int top = cy - Ui.S(4);
+            int x = Ui.S(48);
+            if (it.NeedDownload)
+            {
+                var b = new FlatBtn(T("ui.open_download"), true).Fit(160);
+                b.Height = Ui.S(30); b.Left = x; b.Top = top;
+                b.Click += delegate { OpenUrl(ReleasesUrl); };
+                c.Controls.Add(b); b.BringToFront(); x = b.Right + Ui.S(10);
+            }
+            if (it.NeedCpuOption)
+            {
+                var copy = new FlatBtn(T("ui.copy_cpu_option"), !it.NeedDownload).Fit(170);
+                copy.Height = Ui.S(30); copy.Left = x; copy.Top = top;
+                copy.Click += delegate { try { Clipboard.SetText("-whisper-cpu"); copy.Text = T("ui.copied"); } catch { } };
+                var steam = new FlatBtn(T("ui.open_steam"), false).Fit(120);
+                steam.Height = Ui.S(30); steam.Left = copy.Right + Ui.S(10); steam.Top = top;
+                steam.Click += delegate { OpenUrl("steam://open/games"); };
+                c.Controls.Add(copy); c.Controls.Add(steam); copy.BringToFront(); steam.BringToFront();
+            }
+            if (it.NeedDownload || it.NeedCpuOption) top += Ui.S(30) + Ui.S(8);
+
+            bool open = expanded.Contains(it.Key);
+            var link = new Label { Text = T("ui.what_does_this_do") + (open ? " ▴" : " ▾"), Font = Ui.F(12.5f), ForeColor = Ui.Blue, AutoSize = true, Left = Ui.S(48), Top = top, Cursor = Cursors.Hand, BackColor = Color.Transparent };
+            string key = it.Key;
+            link.Click += delegate
+            {
+                if (!expanded.Remove(key)) expanded.Add(key);
+                int scroll = -content.AutoScrollPosition.Y;
+                ShowMain();
+                content.AutoScrollPosition = new Point(0, scroll);
+            };
+            c.Controls.Add(link);
+            link.BringToFront();
+            int y = top + Ui.S(22);
+            if (open)
+            {
+                y = Text_(c, T("ui.info_fixes") + " " + T("info." + key + ".fixes"), 48, y, 650, 12.5f, FontStyle.Regular, Ui.Muted);
+                y = Text_(c, T("ui.info_changes") + " " + T("info." + key + ".changes"), 48, y + Ui.S(2), 650, 12.5f, FontStyle.Regular, Ui.Muted);
+                y = Text_(c, T("ui.info_undo") + " " + T("info." + key + ".undo"), 48, y + Ui.S(2), 650, 12.5f, FontStyle.Regular, Ui.Muted);
+            }
+            return y + Ui.S(8);
+        }
+
+        // "Questions about this tool? Tiger's fixer thread" link (not the developers' support).
+        int ThreadLink(Control parent, int x, int y)
+        {
+            var l = new Label { Text = T("ui.thread_link"), Font = Ui.F(12.5f), ForeColor = Ui.Blue, AutoSize = true, Left = Ui.S(x), Top = y, Cursor = Cursors.Hand, BackColor = Color.Transparent };
+            l.Click += delegate { OpenUrl(ModThreadUrl); };
+            parent.Controls.Add(l);
+            return y + Ui.S(20);
+        }
+
+        static void OpenUrl(string url)
+        {
+            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
         }
 
         int ChangeCount()
@@ -998,9 +1064,19 @@ static partial class Fixer
                 y = TipsCard(y + Ui.S(14));
             }
             y = DetailsToggle(y + Ui.S(14), error != null || (undoRun && undoCode != 0));
+            y = ThreadLink(content, 22, y + Ui.S(6));
             var again = new FlatBtn(T("ui.change_fixes"), false).Fit(150);
             again.Click += delegate { session = null; Start(); };
-            Buttons(again, CloseButton(true));
+            if (session != null && !undoRun)
+            {
+                var report = new FlatBtn(T("ui.copy_report"), false).Fit(190);
+                report.Click += delegate
+                {
+                    try { Clipboard.SetText(BuildReport(session, result)); report.Text = T("ui.copied"); } catch { }
+                };
+                Buttons(again, report, CloseButton(true));
+            }
+            else Buttons(again, CloseButton(true));
             End(y + Ui.S(10));
         }
 

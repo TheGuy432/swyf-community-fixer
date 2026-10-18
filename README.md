@@ -1,38 +1,52 @@
-# SWYF Speech Fixer
+# SWYF Community Fixer
 
-**Unofficial** community fix for speech-to-text and caller voices in *Scam With Your Friends*.
-Not made, endorsed or supported by the game's developers (Jatater Worldwide).
+**Unofficial** community fixes for *Scam With Your Friends*: speech recognition, caller voices and more.
+Formerly *SWYF Speech Fixer*.
+
+> **Disclaimer:** this tool is made by **Tiger** (Discord: `tigerlundberg`), a player in the Scam With Your Friends community.
+> It is **not made, endorsed or supported by Jatater Worldwide**, the game's developers, so please don't ask them about it:
+> ask in the [fixer thread](https://discord.com/channels/1406416808700940399/1560834677529514055) instead. It changes some of the
+> game's files on your PC, so use it at your own risk. *Undo everything*, or Steam's *Verify integrity of game files*, puts the
+> original files back.
 
 > **Use it when:** your speech never turns into text, the game says *"An incompatible Whisper CPU backend was already loaded"*, the game crashes when speech starts, or transcription is very slow on an older PC.
 
 > **Game update of 18 Oct 2026 (Steam build 26020526):** the game now has its own fixes for the caller voices (steps 3), the Qwen3 limits (4) and English speech on the processor (5), so on that build the tool shows those as *fixed in the game* and leaves those files alone. The speed-up (2), the graphics card test (6) and the launch option advice still apply. If you used an older version of this tool, just run v4.5 once: it reinstalls the speed-up's listening window, which the update replaced, and removes backups of the old game files.
 
+## Help
+
+This tool is **not supported by the game's developers**, so please don't ask about it in the game's bug or support threads.
+Ask in Tiger's **[fixer thread](https://discord.com/channels/1406416808700940399/1560834677529514055)** on the
+Scam With Your Friends Discord instead. After running the tool, press **Copy report for Discord** and paste the report there:
+it tells us your game version, PC, launch options and test results in one go.
+
 ## Download
 
-Get **`SWYF-Speech-Fixer.exe`** from the [**Releases**](../../releases) page.
+Get **`SWYF-Community-Fixer.exe`** from the [**Releases**](../../releases) page.
 Every release file is built automatically by GitHub from the code in this repository (see [Is it safe?](#is-it-safe)).
 
 ## How to use
 
 1. Close the game completely.
-2. Double-click `SWYF-Speech-Fixer.exe`. A window opens and finds the game by itself (or lets you pick the game folder).
+2. Double-click `SWYF-Community-Fixer.exe`. A window opens and finds the game by itself (or lets you pick the game folder).
    Windows may warn about an unknown program: **More info → Run anyway**.
 3. The window lists every fix with a label: **Recommended**, **Installed**, **Optional** or **Not needed**.
    The recommended ones are already ticked. Click a fix to tick or untick it. Unticking an installed fix removes it.
-4. Press **Apply**. When it's done, the window tells you if there's **one more step** (adding the Steam launch option
+4. Not sure what a fix does? Click **What does this do?** under it.
+5. Press **Apply**. When it's done, the window tells you if there's **one more step** (adding the Steam launch option
    `-whisper-cpu`, with a **Copy** button) and gives tips for your PC.
 
 To **undo everything**, open it again and press **Undo everything**.
-Fixes marked **UNTESTED** haven't been confirmed in the game yet: if one causes trouble, untick it and tell Tiger (Discord: `tigerlundberg`).
+Fixes marked **UNTESTED** haven't been confirmed in the game yet: if one causes trouble, untick it and tell Tiger in the [fixer thread](https://discord.com/channels/1406416808700940399/1560834677529514055) on the game's Discord.
 A game update or Steam's *Verify integrity of game files* also restores the original files. Just run the tool again afterwards.
 
-**Text mode:** `SWYF-Speech-Fixer.exe --console` gives the old text menu (type numbers, Enter to apply, `U` to undo, `L` to switch language).
+**Text mode:** `SWYF-Community-Fixer.exe --console` gives the old text menu (type numbers, Enter to apply, `U` to undo, `L` to switch language).
 `--uninstall` undoes everything without asking.
 
 ## Em português
 
 1. Feche o jogo completamente.
-2. Abra o `SWYF-Speech-Fixer.exe` com dois cliques (baixe na página [**Releases**](../../releases)). Se o Windows avisar sobre um programa desconhecido: **Mais informações → Executar assim mesmo**.
+2. Abra o `SWYF-Community-Fixer.exe` com dois cliques (baixe na página [**Releases**](../../releases)). Se o Windows avisar sobre um programa desconhecido: **Mais informações → Executar assim mesmo**.
 3. A janela mostra cada correção. As recomendadas já vêm marcadas: clique para marcar/desmarcar e aperte **Aplicar**.
 4. Para **desfazer tudo**, abra de novo e aperte **Desfazer tudo**.
 
@@ -45,7 +59,7 @@ The tool picks its language by itself: the game's call language first, then your
 Change it with the language button in the top-right corner of the window.
 
 Available now: **English** and **Português (Brasil)**. Translations are made with AI and checked by players when possible,
-so a line may sound a bit off. Tell Tiger (Discord: `tigerlundberg`) or open an issue.
+so a line may sound a bit off. Tell Tiger in the [fixer thread](https://discord.com/channels/1406416808700940399/1560834677529514055) or open an issue.
 
 **Add or fix a translation:** every text is in [`lang/`](lang), one plain text file per language (`en.txt`, `pt.txt`, ...).
 Each line is `key = text`. To add a language, copy `en.txt` to `<code>.txt` (two-letter code, e.g. `fr.txt`), change `_name`
@@ -93,7 +107,7 @@ You shouldn't have to take our word for it, so here is how to check:
 
 - **Read the code.** It's plain C# in [`src/`](src) (about 3,400 lines including the window). No obfuscation, no network code.
 - **Built by GitHub, not on someone's PC.** The [Actions](../../actions) tab shows every build: the exact commands, and the SHA-256 of the .exe it produced. Releases are attached automatically by that build.
-- **Check your download.** In Command Prompt: `certutil -hashfile SWYF-Speech-Fixer.exe SHA256` and compare with `SHA256SUMS.txt` on the release.
+- **Check your download.** In Command Prompt: `certutil -hashfile SWYF-Community-Fixer.exe SHA256` and compare with `SHA256SUMS.txt` on the release.
 - **Scan it yourself** with your antivirus or [VirusTotal](https://www.virustotal.com) if you like.
 - **Model conversion proven identical.** Every build checks that the model conversion is byte-for-byte the same as [whisper.cpp](https://github.com/ggml-org/whisper.cpp)'s own official `quantize` tool.
 - **The bigger speech model is built by GitHub too.** The same build downloads OpenAI's Whisper *small* model (`ggml-small.bin`) from whisper.cpp's official Hugging Face page, checks its SHA-1, converts it, checks the result against the official tool and attaches it to the release with its SHA-256. The model is MIT-licensed, see [WHISPER-MODEL-LICENSE.txt](WHISPER-MODEL-LICENSE.txt).
@@ -112,10 +126,10 @@ Some machine-learning engines (generic names like `Malicious (score: 100)`, `sus
 
 ## For developers
 
-- `build.cmd`: builds `dist\SWYF-Speech-Fixer.exe` (a window app; `src\*.cs` plus every `lang\*.txt` embedded as a resource).
+- `build.cmd`: builds `dist\SWYF-Community-Fixer.exe` (a window app; `src\*.cs` plus every `lang\*.txt` embedded as a resource).
 - `src/Core.cs` has the shared logic (what's installed, applying, tips), `src/Gui.cs` the window, `src/Fixer.cs` the text mode,
   `src/Lang.cs` the translation lookup (`T("key")`, falls back to English per line).
-- `SWYF-Speech-Fixer.exe --convert in.bin out.bin`: runs only the model conversion (used by the CI check and to build the bigger speech model).
+- `SWYF-Community-Fixer.exe --convert in.bin out.bin`: runs only the model conversion (used by the CI check and to build the bigger speech model).
 - `--speech-bench <plugin dir> <model> <wav> <language> <gpu 0/1> <audio_ctx> <capped 0/1>`: the speech speed test's child process.
 - `tools/genmodel.py`: generates full-size Whisper test models with random weights for that check.
 - Test-only options (`--assume-cpu`, `--assume-gpu`, `--assume-threads`, `--assume-build`, `--assume-lang`, `--assume-provider`, `--assume-layers`, `--assume-ram`, `--assume-model-dir`, `--simulate-probe`, `--simulate-bench`, `--test-*` for driving the window, Linux support for the GPU test) only exist when compiled with `/define:SWYF_TEST`. Release builds don't contain them.
