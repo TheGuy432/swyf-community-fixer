@@ -786,8 +786,20 @@ static partial class Fixer
                 steam.Height = Ui.S(30); steam.Left = copy.Right + Ui.S(10); steam.Top = top;
                 steam.Click += delegate { OpenUrl("steam://open/games"); };
                 c.Controls.Add(copy); c.Controls.Add(steam); copy.BringToFront(); steam.BringToFront();
+                x = steam.Right + Ui.S(10);
             }
-            if (it.NeedDownload || it.NeedCpuOption) top += Ui.S(30) + Ui.S(8);
+            if (it.NeedDownload || it.NeedCpuOption)
+            {
+                // After downloading the file or adding the launch option: look again without restarting the tool.
+                var again = new FlatBtn(T("ui.check_again"), false).Fit(120);
+                again.Height = Ui.S(30);
+                again.Left = x;
+                if (again.Right > Ui.S(700)) { top += Ui.S(38); again.Left = Ui.S(48); }   // long translations: next line
+                again.Top = top;
+                again.Click += delegate { session = null; Start(); };
+                c.Controls.Add(again); again.BringToFront();
+                top += Ui.S(30) + Ui.S(8);
+            }
 
             bool open = expanded.Contains(it.Key);
             var link = new Label { Text = T("ui.what_does_this_do") + (open ? " ▴" : " ▾"), Font = Ui.F(12.5f), ForeColor = Ui.Blue, AutoSize = true, MaximumSize = new Size(Ui.S(650), 0), Left = Ui.S(48), Top = top, Cursor = Cursors.Hand, BackColor = Color.Transparent };

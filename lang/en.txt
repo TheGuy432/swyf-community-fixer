@@ -345,3 +345,4 @@ fixname.big = Bigger speech model
 fixname.gpu = Graphics card test
 fixname.bench = Speech speed test
 ui.disclaimer = Made by Tiger (Discord: tigerlundberg), a player in the Scam With Your Friends community. This tool is not made, endorsed or supported by Jatater Worldwide, the game's developers, so please don't ask them about it. It changes some of the game's files on your PC: use it at your own risk. "Undo everything", or Verify integrity of game files in Steam, puts the original files back.
+ui.check_again = Check again

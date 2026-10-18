@@ -61,7 +61,20 @@ static partial class Fixer
         }
         foreach (string d in dirs)
         {
-            try { string p = Path.Combine(d, BigModelFile); if (File.Exists(p)) return p; } catch { }
+            try
+            {
+                string p = Path.Combine(d, BigModelFile);
+                if (File.Exists(p)) return p;
+                // Browsers rename a second download to "SWYF-Speech-Model-small-q8 (1).bin": take the newest such file.
+                string best = null; DateTime newest = DateTime.MinValue;
+                foreach (string f in Directory.GetFiles(d, Path.GetFileNameWithoutExtension(BigModelFile) + "*.bin"))
+                {
+                    DateTime t = File.GetLastWriteTimeUtc(f);
+                    if (t > newest) { newest = t; best = f; }
+                }
+                if (best != null) return best;
+            }
+            catch { }
         }
         return null;
     }

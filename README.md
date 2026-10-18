@@ -43,6 +43,21 @@ A game update or Steam's *Verify integrity of game files* also restores the orig
 **Text mode:** `SWYF-Community-Fixer.exe --console` gives the old text menu (type numbers, Enter to apply, `U` to undo, `L` to switch language).
 `--uninstall` undoes everything without asking.
 
+### Bigger speech model (optional, experimental)
+
+For players whose game language isn't English and whose speech recognition makes lots of mistakes. It needs a second
+download, because the model is about 250 MB:
+
+1. Add the launch option `-whisper-cpu` in Steam (right-click the game > Properties > Launch Options). The tool's
+   **Copy -whisper-cpu** and **Open Steam** buttons help with that.
+2. On the [Releases](../../releases) page, download **`SWYF-Speech-Model-small-q8.bin`** as well as the .exe. Leave it in your
+   **Downloads** folder or put it next to the .exe.
+3. Run the tool (or press **Check again** if it's still open), tick **Bigger speech model for your language** and press **Apply**.
+   It first times the model on your processor and only installs it if your PC is fast enough.
+
+The option only shows up when the tool sees your game language isn't English. If your PC doesn't meet the requirements
+(AVX2, 8 threads, 12 GB memory), it says so instead. To remove it, untick it or press **Undo everything**.
+
 ## Em português
 
 1. Feche o jogo completamente.

@@ -345,3 +345,4 @@ fixname.big = Größeres Sprachmodell
 fixname.gpu = Grafikkartentest
 fixname.bench = Sprach-Geschwindigkeitstest
 ui.disclaimer = Gemacht von Tiger (Discord: tigerlundberg), einem Spieler aus der Community von Scam With Your Friends. Dieses Tool wurde nicht von Jatater Worldwide, den Entwicklern des Spiels, gemacht, befürwortet oder unterstützt, also frag sie bitte nicht danach. Es ändert einige Dateien des Spiels auf deinem PC: Benutzung auf eigene Gefahr. "Alles rückgängig machen" oder Lokale Dateien auf Fehler überprüfen in Steam holt die Originaldateien zurück.
+ui.check_again = Erneut prüfen

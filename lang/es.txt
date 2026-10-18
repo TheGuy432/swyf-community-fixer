@@ -345,3 +345,4 @@ fixname.big = Modelo de voz más grande
 fixname.gpu = Prueba de la tarjeta gráfica
 fixname.bench = Prueba de velocidad de voz
 ui.disclaimer = Hecho por Tiger (Discord: tigerlundberg), un jugador de la comunidad de Scam With Your Friends. Esta herramienta no la hizo, ni la respalda ni la apoya Jatater Worldwide, los desarrolladores del juego, así que no les preguntes a ellos por ella. Cambia algunos archivos del juego en tu PC: úsala bajo tu propio riesgo. "Deshacer todo", o Verificar integridad de los archivos del juego en Steam, devuelve los archivos originales.
+ui.check_again = Comprobar de nuevo
