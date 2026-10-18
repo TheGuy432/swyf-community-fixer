@@ -182,7 +182,8 @@ static partial class Fixer
             return 1;
         }
         string modelDir = Path.Combine(gameDir, WhisperRel), dll = Path.Combine(gameDir, WhisperDllRel);
-        if (uninstallFlag) { DisableOldBepInEx(gameDir); return UndoAll(gameDir, modelDir, dll); }
+        if (uninstallFlag) { DisableOldBepInEx(gameDir); return UndoAll(gameDir, modelDir, dll); }   // undo never needs the disclaimer
+        if (!ConsoleDisclaimer()) return 0;
 
         Session s = Detect(gameDir);
         Line((T("main.processor_avx") + " ") + YesNo(s.HasAvx) + ", AVX2 " + YesNo(s.HasAvx2) + ", "

@@ -346,3 +346,14 @@ fixname.gpu = Test karty graficznej
 fixname.bench = Test szybkości mowy
 ui.disclaimer = Autor: Tiger (Discord: tigerlundberg), gracz ze społeczności Scam With Your Friends. To narzędzie nie jest tworzone, popierane ani wspierane przez Jatater Worldwide, twórców gry, więc nie pytaj ich o nie. Zmienia niektóre pliki gry na twoim komputerze: używasz go na własne ryzyko. "Cofnij wszystko" albo "Sprawdź spójność plików gry" w Steam przywraca oryginalne pliki.
 ui.check_again = Sprawdź ponownie
+
+# ---- disclaimer to accept before the tool changes anything ----
+disclaimer.title = Zanim zaczniesz
+disclaimer.made_by = To narzędzie zrobił Tiger (Discord: tigerlundberg), gracz ze społeczności Scam With Your Friends.
+disclaimer.no_dev_support = Nie jest tworzone, popierane ani wspierane przez Jatater Worldwide, twórców gry. Nie pytaj o nie twórców ani supportu gry.
+disclaimer.risk = Zmienia niektóre pliki gry na twoim komputerze. Używasz go na własne ryzyko.
+disclaimer.undo = Wszystko da się cofnąć: kliknij "Cofnij wszystko" w tym narzędziu albo użyj "Sprawdź spójność plików gry" w Steam.
+disclaimer.thread = Pytania albo problemy: wątek Tigera o fixerze na Discordzie: {0}
+disclaimer.accept = Rozumiem, dalej
+disclaimer.console_prompt = Wpisz T i naciśnij Enter, żeby kontynuować (cokolwiek innego zamyka):
+disclaimer.console_yes = t

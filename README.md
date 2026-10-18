@@ -113,6 +113,7 @@ Only these, and only if they are the exact known versions (checked by SHA-256). 
 | `Scam With Your Friends_Data\Managed\Assembly-CSharp.dll` | card-number pauses (1 byte) and 66 filler lines (step 3); Qwen3 limits (8 bytes, step 4, only if you tick it) | none needed: every change is reversible byte for byte |
 | `Scam With Your Friends_Data\StreamingAssets\Whisper\ggml-base.bin` | replaced with the bigger speech model (only if you tick it) | `.bigmodel-backup` |
 
+The first time it runs it shows the disclaimer above, and remembers that you accepted it in `HKEY_CURRENT_USER\Software\SWYF Community Fixer` (`DisclaimerAccepted`); that is the only thing it writes outside the game folder.
 It **reads** (never writes) your Steam launch options and installed build number for this game, and the game's BanditCam watermark, call language and speech recognition settings, only to show the right advice.
 It downloads nothing and sends nothing anywhere (the bigger speech model is a separate download you make yourself). Exact byte-level details are in [PATCHES.md](PATCHES.md).
 

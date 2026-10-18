@@ -346,3 +346,14 @@ fixname.gpu = Тест видеокарты
 fixname.bench = Тест скорости речи
 ui.disclaimer = Сделал Tiger (Discord: tigerlundberg), игрок из сообщества Scam With Your Friends. Эта программа не создана, не одобрена и не поддерживается Jatater Worldwide, разработчиками игры, так что, пожалуйста, не спрашивай их о ней. Она меняет некоторые файлы игры на твоём ПК: используй её на свой страх и риск. «Отменить всё» или «Проверить целостность файлов игры» в Steam вернут оригинальные файлы.
 ui.check_again = Проверить снова
+
+# ---- disclaimer to accept before the tool changes anything ----
+disclaimer.title = Перед началом
+disclaimer.made_by = Эту программу сделал Tiger (Discord: tigerlundberg), игрок из сообщества Scam With Your Friends.
+disclaimer.no_dev_support = Она не создана, не одобрена и не поддерживается Jatater Worldwide, разработчиками игры. Пожалуйста, не спрашивай о ней разработчиков или поддержку игры.
+disclaimer.risk = Она меняет некоторые файлы игры на твоём ПК. Используй её на свой страх и риск.
+disclaimer.undo = Всё можно отменить: нажми «Отменить всё» в этой программе или «Проверить целостность файлов игры» в Steam.
+disclaimer.thread = Вопросы или проблемы: ветка фиксера от Tiger в Discord: {0}
+disclaimer.accept = Понятно, продолжить
+disclaimer.console_prompt = Введи Y (или Д) и нажми Enter, чтобы продолжить (всё остальное закроет):
+disclaimer.console_yes = д

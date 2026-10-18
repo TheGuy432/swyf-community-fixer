@@ -346,3 +346,14 @@ fixname.gpu = Graphics card test
 fixname.bench = Speech speed test
 ui.disclaimer = Made by Tiger (Discord: tigerlundberg), a player in the Scam With Your Friends community. This tool is not made, endorsed or supported by Jatater Worldwide, the game's developers, so please don't ask them about it. It changes some of the game's files on your PC: use it at your own risk. "Undo everything", or Verify integrity of game files in Steam, puts the original files back.
 ui.check_again = Check again
+
+# ---- disclaimer to accept before the tool changes anything ----
+disclaimer.title = Before you start
+disclaimer.made_by = This tool is made by Tiger (Discord: tigerlundberg), a player in the Scam With Your Friends community.
+disclaimer.no_dev_support = It is not made, endorsed or supported by Jatater Worldwide, the game's developers. Please don't ask the developers or the game's support about it.
+disclaimer.risk = It changes some of the game's files on your PC. Use it at your own risk.
+disclaimer.undo = Everything can be undone: press "Undo everything" in this tool, or use Verify integrity of game files in Steam.
+disclaimer.thread = Questions or problems: Tiger's fixer thread on Discord: {0}
+disclaimer.accept = I understand, continue
+disclaimer.console_prompt = Type Y and press Enter to continue (anything else closes it):
+disclaimer.console_yes = y

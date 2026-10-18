@@ -339,3 +339,14 @@ info.bench.changes = nada. Se o processador for bem mais rápido, ele pede para 
 info.bench.undo = nada para desfazer.
 ui.disclaimer = Feito pelo Tiger (Discord: tigerlundberg), um jogador da comunidade de Scam With Your Friends. Esta ferramenta não é feita, aprovada nem suportada pela Jatater Worldwide, os desenvolvedores do jogo, então não pergunte a eles sobre ela. Ela muda alguns arquivos do jogo no seu PC: use por sua conta e risco. "Desfazer tudo", ou Verificar integridade dos arquivos do jogo na Steam, devolve os arquivos originais.
 ui.check_again = Verificar de novo
+
+# ---- disclaimer to accept before the tool changes anything ----
+disclaimer.title = Antes de começar
+disclaimer.made_by = Esta ferramenta é feita pelo Tiger (Discord: tigerlundberg), um jogador da comunidade de Scam With Your Friends.
+disclaimer.no_dev_support = Ela não é feita, aprovada nem suportada pela Jatater Worldwide, os desenvolvedores do jogo. Não pergunte aos desenvolvedores nem ao suporte do jogo sobre ela.
+disclaimer.risk = Ela muda alguns arquivos do jogo no seu PC. Use por sua conta e risco.
+disclaimer.undo = Tudo pode ser desfeito: aperte "Desfazer tudo" nesta ferramenta, ou use Verificar integridade dos arquivos do jogo na Steam.
+disclaimer.thread = Dúvidas ou problemas: tópico do fixer do Tiger no Discord: {0}
+disclaimer.accept = Entendi, continuar
+disclaimer.console_prompt = Digite S e aperte Enter para continuar (qualquer outra coisa fecha):
+disclaimer.console_yes = s

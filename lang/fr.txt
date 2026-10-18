@@ -346,3 +346,14 @@ fixname.gpu = Test de la carte graphique
 fixname.bench = Test de vitesse vocale
 ui.disclaimer = Fait par Tiger (Discord : tigerlundberg), un joueur de la communauté Scam With Your Friends. Cet outil n'est pas fait, approuvé ni soutenu par Jatater Worldwide, les développeurs du jeu, donc merci de ne pas leur poser de questions dessus. Il modifie certains fichiers du jeu sur ton PC : tu l'utilises à tes propres risques. « Tout annuler », ou Vérifier l'intégrité des fichiers du jeu dans Steam, remet les fichiers d'origine.
 ui.check_again = Vérifier à nouveau
+
+# ---- disclaimer to accept before the tool changes anything ----
+disclaimer.title = Avant de commencer
+disclaimer.made_by = Cet outil est fait par Tiger (Discord : tigerlundberg), un joueur de la communauté Scam With Your Friends.
+disclaimer.no_dev_support = Il n'est ni fait, ni approuvé, ni pris en charge par Jatater Worldwide, les développeurs du jeu. Ne pose pas de questions dessus aux développeurs ni au support du jeu.
+disclaimer.risk = Il modifie certains fichiers du jeu sur ton PC. Utilise-le à tes risques et périls.
+disclaimer.undo = Tout peut être annulé : clique sur « Tout annuler » dans cet outil, ou utilise Vérifier l'intégrité des fichiers du jeu dans Steam.
+disclaimer.thread = Questions ou problèmes : le fil du fixer de Tiger sur Discord : {0}
+disclaimer.accept = J'ai compris, continuer
+disclaimer.console_prompt = Tape O et appuie sur Entrée pour continuer (autre chose ferme) :
+disclaimer.console_yes = o

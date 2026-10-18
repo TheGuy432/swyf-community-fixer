@@ -604,6 +604,7 @@ static partial class Fixer
         // ---- start: find the game, check it isn't running, detect ----
         void Start()
         {
+            if (!DisclaimerAccepted()) { ShowDisclaimer(); return; }
             if (gameDir == null) gameDir = FindGameDir();
             if (!IsGameDir(gameDir)) { ShowNotFound(); return; }
             if (GameRunning()) { ShowRunning(); return; }
@@ -615,6 +616,29 @@ static partial class Fixer
             catch (Exception e) { error = e; session = null; ShowDone(); return; }
             finally { Cursor = Cursors.Default; }
             ShowMain();
+        }
+
+        // First run: who made this tool and that the developers don't support it. Must be accepted to go on.
+        void ShowDisclaimer()
+        {
+            rebuild = ShowDisclaimer;
+            Begin();
+            int y = Ui.S(20);
+            var c = new Card { Left = Ui.S(20), Top = y, Width = Ui.S(720), Fill = Ui.WarnSoft, Stripe = Ui.WarnLine };
+            int cy = Ui.S(18);
+            cy = Text_(c, T("disclaimer.title"), 20, cy, 680, 17, FontStyle.Bold, Ui.Ink) + Ui.S(10);
+            foreach (string p in DisclaimerPoints())
+            {
+                Text_(c, "•", 22, cy, 12, 14, FontStyle.Regular, Ui.Ink);
+                cy = Text_(c, p, 40, cy, 660, 14, FontStyle.Regular, Ui.Ink) + Ui.S(8);
+            }
+            cy = ThreadLink(c, 20, cy + Ui.S(2), 680) + Ui.S(12);
+            c.Height = cy;
+            content.Controls.Add(c);
+            var accept = new FlatBtn(T("disclaimer.accept"), true).Fit(220);
+            accept.Click += delegate { AcceptDisclaimer(); Start(); };
+            Buttons(null, CloseButton(false), accept);
+            End(c.Bottom + Ui.S(16));
         }
 
         void ShowNotFound()
@@ -824,12 +848,13 @@ static partial class Fixer
         }
 
         // "Questions about this tool? Tiger's fixer thread" link (not the developers' support).
-        int ThreadLink(Control parent, int x, int y)
+        int ThreadLink(Control parent, int x, int y) { return ThreadLink(parent, x, y, 716); }
+        int ThreadLink(Control parent, int x, int y, int w)
         {
             string text = T("ui.thread_link");
             Font f = Ui.F(12.5f);
-            int h = Ui.TextHeight(text, f, Ui.S(716)) + Ui.S(2);
-            var l = new Label { Text = text, Font = f, ForeColor = Ui.Blue, AutoSize = false, Width = Ui.S(716), Height = h, Left = Ui.S(x), Top = y, Cursor = Cursors.Hand, BackColor = Color.Transparent, UseMnemonic = false };
+            int h = Ui.TextHeight(text, f, Ui.S(w)) + Ui.S(2);
+            var l = new Label { Text = text, Font = f, ForeColor = Ui.Blue, AutoSize = false, Width = Ui.S(w), Height = h, Left = Ui.S(x), Top = y, Cursor = Cursors.Hand, BackColor = Color.Transparent, UseMnemonic = false };
             l.Click += delegate { OpenUrl(ModThreadUrl); };
             parent.Controls.Add(l);
             return y + h;
