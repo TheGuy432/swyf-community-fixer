@@ -159,9 +159,9 @@ The tool starts itself again as a child process (`--vulkan-probe`).
 **More `-whisper-cpu` advice** (also no files changed). Even when the test passes, the tool asks for `-whisper-cpu` when:
 - the PC has AMD processor graphics (vendor `1002`) plus an NVIDIA card (`10de`): on every such PC we've seen, the game's
   speech engine starts loading on the graphics card and never finishes;
-- the game's call language (PlayerPrefs `Kolkata.CallLanguage`) isn't English: the multilingual model took 14–35 s per sentence
+- the game's call language (game setting `Kolkata.CallLanguage`, see *Game settings* below) isn't English: the multilingual model took 14–35 s per sentence
   on the graphics card on several PCs, against a few seconds on the processor. Not when the player picked Deepgram, or Moonshine
-  for a language it covers (en, de, es, ar, ja, zh; PlayerPrefs `SpeechRecognition.Provider`).
+  for a language it covers (en, de, es, ar, ja, zh; game setting `SpeechRecognition.Provider`).
 
 It doesn't suggest removing `-whisper-cpu` on those PCs.
 
@@ -169,8 +169,19 @@ It reads `Steam\userdata\*\config\localconfig.vdf` to see whether `-whisper-cpu`
 
 ## 7. Watermark tip (no files changed)
 
-Reads the Unity PlayerPrefs value `KolkataOS.BanditCam.Watermark` from
-`HKEY_CURRENT_USER\Software\Jatater Worldwide\Scam With Your Friends`, only to say whether the watermark is already off.
+Reads the game setting `KolkataOS.BanditCam.Watermark` (see *Game settings* below), only to say whether the watermark is
+already off.
+
+### Game settings (read only)
+
+The tool reads four of the game's settings: `Kolkata.CallLanguage`, `LanguageManager.CurrentLanguage`,
+`SpeechRecognition.Provider` and `KolkataOS.BanditCam.Watermark`. Since game 0.1.83 (Steam build 26097532, 21 Oct 2026)
+the game keeps them in `%USERPROFILE%\AppData\LocalLow\Jatater Worldwide\Scam With Your Friends\MetaSave\local.json`
+(`values`), falling back to `local.json.bak`; before that they were Unity PlayerPrefs in
+`HKEY_CURRENT_USER\Software\Jatater Worldwide\Scam With Your Friends`. The game copies an old registry value into the file
+the first time it reads it but never deletes it, so the file wins and the registry is only used for a key the file doesn't
+have yet while its `importLegacy` is on (as the game does). `local.json` also holds the player's Deepgram API key: the
+tool only picks out these four keys, never reads anything else out of it, and never writes to it.
 
 ## 8. EXPERIMENTAL: bigger speech model (`StreamingAssets\Whisper\ggml-base.bin`)
 

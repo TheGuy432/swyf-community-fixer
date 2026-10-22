@@ -49,7 +49,7 @@ static partial class Fixer
         return s.SteamBuild >= BuildOct18 || s.PocketHash == PocketOct18 || s.AsmHash == AsmOct18 || s.SadHash == SadOct18;
     }
 
-    // Two-letter call language ("pt"), or null if unknown. The game keeps it in PlayerPrefs.
+    // Two-letter call language ("pt"), or null if unknown. Game setting (MetaSave\local.json since 0.1.83, registry before).
     static string ReadCallLanguage()
     {
         if (assumeLanguage != null) return assumeLanguage == "" ? null : assumeLanguage;

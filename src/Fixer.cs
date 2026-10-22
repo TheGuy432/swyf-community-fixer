@@ -21,7 +21,7 @@ using System.Text.RegularExpressions;
 
 static partial class Fixer
 {
-    const string Version = "4.5.0";
+    const string Version = "4.5.1";
     const string AppId = "4954910";
     const string GameFolderName = "Scam With Your Friends";
     const string GameExe = "Scam With Your Friends.exe";
@@ -355,7 +355,8 @@ static partial class Fixer
     }
 
     // Unity PlayerPrefs string (REG_BINARY, UTF-8, trailing NUL) whose name starts with key + "_h". null = not found.
-    static string ReadPrefString(string key)
+    // Game 0.1.82 and older only; use ReadPrefString (GameSettings.cs), which checks the game's MetaSave file first.
+    static string ReadRegistryPrefString(string key)
     {
         try
         {
@@ -423,21 +424,29 @@ static partial class Fixer
         return null;
     }
 
-    // Unity PlayerPrefs (HKCU\Software\Jatater Worldwide\Scam With Your Friends): 0 = off, 1 = on (default), -1 = unknown
-    static int ReadWatermarkSetting()
+    // Unity PlayerPrefs int (REG_DWORD) whose name starts with key + "_h". null = not found or couldn't read it.
+    // Game 0.1.82 and older only; use ReadPrefInt (GameSettings.cs).
+    static long? ReadRegistryPrefInt(string key)
     {
         try
         {
             using (var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(PrefsKey))
             {
-                if (k == null) return 1;
+                if (k == null) return null;
                 foreach (string name in k.GetValueNames())
-                    if (name.StartsWith("KolkataOS.BanditCam.Watermark_h", StringComparison.Ordinal))
-                        return Convert.ToInt64(k.GetValue(name)) == 0 ? 0 : 1;
+                    if (name.StartsWith(key + "_h", StringComparison.Ordinal))
+                        return Convert.ToInt64(k.GetValue(name));
             }
-            return 1;
         }
-        catch { return -1; }
+        catch { }
+        return null;
+    }
+
+    // BanditCam watermark game setting: 0 = off, 1 = on (default).
+    static int ReadWatermarkSetting()
+    {
+        long? v = ReadPrefInt("KolkataOS.BanditCam.Watermark");
+        return v == null ? 1 : v.Value == 0 ? 0 : 1;
     }
 
     static void GetCpu(out bool avx, out bool avx2)
