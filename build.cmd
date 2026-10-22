@@ -11,7 +11,7 @@ if not exist "%CSC%" (
 if not exist dist mkdir dist
 set RES=
 for %%f in (lang\*.txt) do set RES=!RES! /resource:%%f,lang.%%~nxf
-"%CSC%" /nologo /target:winexe /platform:x64 /optimize+ /codepage:65001 /win32manifest:app.manifest /r:System.Windows.Forms.dll /r:System.Drawing.dll !RES! /out:dist\SWYF-Community-Fixer.exe src\*.cs
+"%CSC%" /nologo /target:winexe /platform:x64 /optimize+ /codepage:65001 /win32manifest:app.manifest /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll !RES! /out:dist\SWYF-Community-Fixer.exe src\*.cs
 if errorlevel 1 exit /b 1
 echo.
 echo Built dist\SWYF-Community-Fixer.exe

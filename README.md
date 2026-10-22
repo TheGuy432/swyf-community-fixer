@@ -13,6 +13,8 @@ Formerly *SWYF Speech Fixer*.
 
 > **Game update of 18 Oct 2026 (Steam build 26020526):** the game now has its own fixes for the caller voices (steps 3), the Qwen3 limits (4) and English speech on the processor (5), so on that build the tool shows those as *fixed in the game* and leaves those files alone. The speed-up (2), the graphics card test (6) and the launch option advice still apply. If you used an older version of this tool, just run v4.5 once: it reinstalls the speed-up's listening window, which the update replaced, and removes backups of the old game files.
 
+> **Game 0.1.83 (21 Oct 2026, Steam build 26097532):** the speed-up still works (the speech files didn't change). The game now keeps its settings in `MetaSave\local.json` instead of the registry, so use v4.5.1 or newer: older versions can read an old call language or speech setting, or none at all on a fresh install, and give the wrong `-whisper-cpu` advice.
+
 ## Help
 
 This tool is **not supported by the game's developers**, so please don't ask about it in the game's bug or support threads.
